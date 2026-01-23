@@ -22,6 +22,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, productId: string, productName: string } | null>(null)
   const router = useRouter()
 
   // Form state
@@ -157,17 +158,22 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+  const handleDelete = (id: string, name: string) => {
+    setDeleteConfirm({ show: true, productId: id, productName: name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
 
     try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/products/${deleteConfirm.productId}`, { method: 'DELETE' })
       const data = await res.json()
 
       if (data.status) {
         setToast({ message: data.message, type: 'success' })
         setTimeout(() => setToast(null), 3000)
-        fetchProducts()
+        await fetchProducts()
+        setDeleteConfirm(null)
       } else {
         setToast({ message: data.message, type: 'error' })
         setTimeout(() => setToast(null), 3000)
@@ -548,7 +554,7 @@ const AdminDashboard = () => {
                         <Edit size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(product._id)}
+                        onClick={() => handleDelete(product._id, product.name)}
                         className="glow-blue p-2 rounded-lg glass-interactive text-destructive transition-colors"
                       >
                         <Trash2 size={16} />
@@ -561,6 +567,39 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm?.show && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            onClick={() => setDeleteConfirm(null)}
+          />
+
+          {/* Modal */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 glass-strong rounded-lg border border-white/10 animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-foreground mb-3">Delete Product?</h3>
+            <p className="text-muted-foreground mb-6">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{deleteConfirm.productName}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 rounded-lg glass-interactive text-foreground font-medium hover:bg-secondary transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-medium hover:opacity-90 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Toast Notification */}
       {toast && (

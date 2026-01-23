@@ -23,6 +23,7 @@ const Marketplace = () => {
     const { updateCartCount } = useCart()
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [products, setProducts] = useState<Product[]>([])
+    const [latestProducts, setLatestProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [selectCategory, setSelectCategory] = useState('All Products')
@@ -70,13 +71,30 @@ const Marketplace = () => {
         setShowSuccessModal(true)
     }
 
+    // Fisher-Yates shuffle algorithm
+    const shuffleArray = (array: Product[]): Product[] => {
+        const shuffled = [...array]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            const temp = shuffled[i]!
+            shuffled[i] = shuffled[j]!
+            shuffled[j] = temp
+        }
+        return shuffled
+    }
+
     const fetchProducts = () => {
         setLoading(true)
         fetch('/api/products')
             .then((res) => res.json())
             .then((data) => {
                 if (data.status) {
-                    setProducts(data.products || [])
+                    const allProducts = data.products || []
+                    // Keep latest products unshuffled for "Latest in Store"
+                    setLatestProducts(allProducts.slice(0, 8))
+                    // Shuffle products for main grid variety
+                    const shuffled = shuffleArray(allProducts)
+                    setProducts(shuffled)
                 }
             })
             .catch((err) => {
@@ -96,9 +114,6 @@ const Marketplace = () => {
         const matchesCategory = selectCategory === 'All Products' || product.category === selectCategory
         return matchesSearch && matchesCategory
     })
-
-    // Get latest 5-8 products for featured section
-    const featuredProducts = products.slice(0, 8)
 
     return (
         <>
@@ -131,33 +146,33 @@ const Marketplace = () => {
             ) : (
                 <>
                     {/* Featured/Latest Products - Horizontal Scroll */}
-                    {!search && selectCategory === 'All Products' && featuredProducts.length > 0 && (
-                        <section className="px-4 py-4 bg-background border-b border-border">
-                            <h2 className="text-lg font-bold text-foreground mb-3">Latest in Store</h2>
-                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                                <div className="flex gap-3 pb-2">
-                                    {featuredProducts.map((product) => (
+                    {!search && selectCategory === 'All Products' && latestProducts.length > 0 && (
+                        <section className="px-4 lg:px-8 py-6 lg:py-8 bg-background border-b border-border">
+                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-4 lg:mb-8">Latest in Store</h2>
+                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
+                                <div className="flex gap-3 lg:gap-6 pb-2">
+                                    {latestProducts.map((product) => (
                                         <Link
                                             key={product._id}
                                             href={`/product/${product._id}`}
-                                            className="glow-blue flex-shrink-0 w-44 bg-card rounded-lg border border-border overflow-hidden hover:border-accent transition-colors"
+                                            className="glow-blue flex-shrink-0 w-44 lg:w-72 bg-card rounded-lg border border-border overflow-hidden hover:border-accent transition-colors"
                                         >
-                                            <div className="w-full h-33 bg-secondary flex items-center justify-center relative">
+                                            <div className="w-full h-33 lg:h-60 bg-secondary flex items-center justify-center relative">
                                                 {product.images && product.images.length > 0 && product.images[0] ? (
                                                     <Image
                                                         src={product.images[0]}
                                                         alt={product.name}
-                                                        width={176}
-                                                        height={144}
+                                                        width={288}
+                                                        height={240}
                                                         className="object-cover w-full h-full"
                                                     />
                                                 ) : (
-                                                    <div className="text-4xl">📦</div>
+                                                    <div className="text-4xl lg:text-7xl">📦</div>
                                                 )}
                                             </div>
-                                            <div className="p-3">
-                                                <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
-                                                <p className="text-primary font-bold text-base">₦{product.price.toLocaleString()}</p>
+                                            <div className="p-3 lg:p-5">
+                                                <p className="text-sm lg:text-lg font-medium text-foreground truncate">{product.name}</p>
+                                                <p className="text-primary font-bold text-base lg:text-2xl">₦{product.price.toLocaleString()}</p>
                                             </div>
                                         </Link>
                                     ))}
@@ -166,10 +181,10 @@ const Marketplace = () => {
                         </section>
                     )}
 
-                    {/* Main Product Grid - 2 Columns */}
+                    {/* Main Product Grid - 2 Columns Mobile, 4 Desktop */}
                     <div className="bg-background">
-                        <div className="px-4 pt-4 pb-2">
-                            <h2 className="text-lg font-bold text-foreground mb-3">Browse Collections</h2>
+                        <div className="px-4 lg:px-8 pt-4 lg:pt-6 pb-2">
+                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-3 lg:mb-6">Browse Collections</h2>
                         </div>
                         <CategoryPills
                             categories={categories}
@@ -181,8 +196,8 @@ const Marketplace = () => {
                                 No products found {search && `for "${search}"`}
                             </div>
                         ) : (
-                            <div className="p-4 pt-3">
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 lg:px-8 lg:py-6 pt-3">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                                     {filteredProducts.map((product) => (
                                         <Link
                                             key={product._id}
@@ -190,37 +205,37 @@ const Marketplace = () => {
                                             className="glow-blue bg-card rounded-lg border border-border overflow-hidden hover:border-accent transition-colors"
                                         >
                                             {/* Product Image */}
-                                            <div className="w-full h-40 bg-secondary flex items-center justify-center text-muted-foreground relative">
+                                            <div className="w-full h-40 lg:h-64 bg-secondary flex items-center justify-center text-muted-foreground relative">
                                                 {product.images && product.images.length > 0 && product.images[0] ? (
                                                     <Image
                                                         src={product.images[0]}
                                                         alt={product.name}
-                                                        width={200}
-                                                        height={160}
+                                                        width={300}
+                                                        height={256}
                                                         className="object-cover w-full h-full"
                                                     />
                                                 ) : (
-                                                    <div className="text-5xl">📦</div>
+                                                    <div className="text-5xl lg:text-7xl">📦</div>
                                                 )}
                                             </div>
 
                                             {/* Product Info */}
-                                            <div className="p-3">
-                                                <p className="text-sm font-medium text-foreground mb-1 truncate">{product.name}</p>
-                                                <p className="text-primary font-bold mb-3">₦{product.price.toLocaleString()}</p>
+                                            <div className="p-3 lg:p-5">
+                                                <p className="text-sm lg:text-base font-medium text-foreground mb-1 truncate">{product.name}</p>
+                                                <p className="text-primary font-bold mb-3 lg:mb-4 text-base lg:text-xl">₦{product.price.toLocaleString()}</p>
 
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2">
-                                                    <button className="glow-blue flex-1 flex items-center justify-center gap-1 bg-primary text-primary-foreground py-2 rounded-full text-xs font-medium hover:opacity-90">
-                                                        <Eye size={14} />
+                                                    <button className="glow-blue flex-1 flex items-center justify-center gap-1 lg:gap-2 bg-primary text-primary-foreground py-2 lg:py-3 rounded-full text-xs lg:text-sm font-medium hover:opacity-90">
+                                                        <Eye size={14} className="lg:w-5 lg:h-5" />
                                                         View
                                                     </button>
                                                     <button
                                                         onClick={(e) => addToCart(e, product)}
-                                                        className={`glow-blue flex-shrink-0 w-9 h-9 bg-card border border-border rounded-full flex items-center justify-center hover:bg-secondary transition-all ${flashingCart === product._id ? 'flash-blue' : ''
+                                                        className={`glow-blue flex-shrink-0 w-9 h-9 lg:w-12 lg:h-12 bg-card border border-border rounded-full flex items-center justify-center hover:bg-secondary transition-all ${flashingCart === product._id ? 'flash-blue' : ''
                                                             }`}
                                                     >
-                                                        <ShoppingCart size={14} className={`transition-colors ${flashingCart === product._id ? 'text-white' : 'text-foreground'
+                                                        <ShoppingCart size={14} className={`lg:w-5 lg:h-5 transition-colors ${flashingCart === product._id ? 'text-white' : 'text-foreground'
                                                             }`} />
                                                     </button>
                                                 </div>

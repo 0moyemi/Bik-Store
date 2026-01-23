@@ -55,12 +55,11 @@ export default function FirstLoadAnimation() {
     // Set GSAP defaults exactly as in the original
     gsap.defaults({ ease: "power3.out" });
 
-    // Store timeline reference for cleanup outside requestAnimationFrame
-    let tl: gsap.core.Timeline;
+    // Store timeline reference for cleanup
+    let tl: gsap.core.Timeline | null = null;
 
-    // CRITICAL: Wait for React to render the DOM elements before animating
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
+    // Wait for DOM elements to be rendered before animating
+    setTimeout(() => {
       tl = gsap.timeline({
         delay: 0.2,
         onComplete: () => {
@@ -143,9 +142,9 @@ export default function FirstLoadAnimation() {
           duration: 0.5,
           ease: "power2.inOut"
         });
-    }); // End requestAnimationFrame
+    }, 50); // 50ms delay for DOM to render
 
-    // Cleanup - CRITICAL: restore overflow and kill animation if component unmounts
+    // Cleanup - restore overflow and kill animation if component unmounts
     return () => {
       if (tl) tl.kill();
       document.body.style.overflow = 'auto';
