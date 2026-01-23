@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useCart } from "@/app/context/CartContext"
 import { usePathname, useRouter } from "next/navigation"
+import ThemeSwitch from "./ThemeSwitch"
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -80,6 +81,14 @@ const Header = () => {
               <Mail size={20} />
               About & Contact
             </Link>
+
+            {/* Theme Switch */}
+            <div className="mt-auto pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Theme</span>
+                <ThemeSwitch />
+              </div>
+            </div>
           </nav>
         </>
       )}

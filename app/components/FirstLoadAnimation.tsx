@@ -166,10 +166,6 @@ export default function FirstLoadAnimation() {
       </div>
 
       <style jsx>{`
-        :root {
-          --loader-scale: 1;
-        }
-
         .first-load-overlay {
           position: fixed;
           inset: 0;
@@ -190,8 +186,8 @@ export default function FirstLoadAnimation() {
           display: flex;
           justify-content: center;
           align-items: center;
-          transform: scale(var(--loader-scale));
-          padding-left: 195px;
+          transform: scale(0.4);
+          padding-left: 115px;
           padding-right: 50px;
         }
 
@@ -229,25 +225,6 @@ export default function FirstLoadAnimation() {
 
         .o1-clone {
           opacity: 0;
-        }
-
-        /* Responsive scaling using CSS variables */
-        @media (max-width: 768px) {
-          :root {
-            --loader-scale: 0.7;
-          }
-        }
-
-        @media (max-width: 480px) {
-          :root {
-            --loader-scale: 0.5;
-          }
-        }
-
-        @media (max-width: 350px) {
-          :root {
-            --loader-scale: 0.4;
-          }
         }
       `}</style>
     </div>
