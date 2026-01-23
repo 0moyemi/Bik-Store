@@ -47,95 +47,102 @@ export default function FirstLoadAnimation() {
     // Lock scrolling during animation
     document.body.style.overflow = 'hidden';
 
-    // Set GSAP defaults exactly as in the original
-    gsap.defaults({ ease: "power3.out" });
+    // Store timeline reference for cleanup
+    let tl: gsap.core.Timeline | null = null;
 
-    const tl = gsap.timeline({
-      delay: 0.2,
-      onComplete: () => {
-        // Start fade out
-        setTimeout(() => {
-          setIsFadingOut(true);
-          // Show page content and remove loader
-          const pageContent = document.getElementById('page-content');
-          if (pageContent) {
-            pageContent.style.opacity = '1';
-            pageContent.style.transition = 'opacity 0.6s ease-in';
-          }
+    // CRITICAL: Wait for React to render the DOM elements before animating
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // Set GSAP defaults exactly as in the original
+      gsap.defaults({ ease: "power3.out" });
+
+      tl = gsap.timeline({
+        delay: 0.2,
+        onComplete: () => {
+          // Start fade out
           setTimeout(() => {
-            setIsVisible(false);
-            document.body.style.overflow = 'auto';
-          }, 600);
-        }, 500);
-      }
-    });
-
-    /* ZERO 1 rolls in */
-    tl.to(".z1", {
-      x: 180,
-      duration: 0.8,
-      ease: "elastic.out(1, 0.9)"
-    });
-
-    /* ZERO 2 rolls in */
-    tl.to(".z2", {
-      x: 150,
-      duration: 0.6,
-      ease: "elastic.out(1, 0.4)"
-    }, "-=0.2");
-
-    /* PUSH reaction */
-    tl.to(".z1", {
-      x: 195,
-      scaleX: 0.9,
-      duration: 0.3,
-      ease: "power2.inOut"
-    }, "<")
-
-    // recover shape
-    tl.to(".z1", {
-      scaleX: 1,
-      duration: 0.15,
-      ease: "power2.out"
-    });
-
-    /* prepare both 1s */
-    tl.set([".o1", ".o1-clone"], {
-      opacity: 1,
-      y: 0
-    });
-
-    /* drop BOTH together */
-    tl.to([".o1", ".o1-clone"], {
-      y: 190,
-      duration: 0.45,
-      ease: "power2.in"
-    }, "-=0.2")
-
-      /* single bounce up (together) */
-      .to([".o1", ".o1-clone"], {
-        y: 155,
-        duration: 0.25,
-        ease: "power2.out"
-      })
-
-      /* settle (together) */
-      .to([".o1", ".o1-clone"], {
-        y: 190,
-        duration: 0.2,
-        ease: "power2.in"
-      })
-
-      /* split AFTER settle */
-      .to(".o1-clone", {
-        x: -145,
-        duration: 0.5,
-        ease: "power2.inOut"
+            setIsFadingOut(true);
+            // Show page content and remove loader
+            const pageContent = document.getElementById('page-content');
+            if (pageContent) {
+              pageContent.style.opacity = '1';
+              pageContent.style.transition = 'opacity 0.6s ease-in';
+            }
+            setTimeout(() => {
+              setIsVisible(false);
+              document.body.style.overflow = 'auto';
+            }, 600);
+          }, 500);
+        }
       });
 
-    // Cleanup - CRITICAL: restore overflow and kill animation if route changes mid-animation
+      /* ZERO 1 rolls in */
+      tl.to(".z1", {
+        x: 180,
+        duration: 0.8,
+        ease: "elastic.out(1, 0.9)"
+      });
+
+      /* ZERO 2 rolls in */
+      tl.to(".z2", {
+        x: 150,
+        duration: 0.6,
+        ease: "elastic.out(1, 0.4)"
+      }, "-=0.2");
+
+      /* PUSH reaction */
+      tl.to(".z1", {
+        x: 195,
+        scaleX: 0.9,
+        duration: 0.3,
+        ease: "power2.inOut"
+      }, "<")
+
+        // recover shape
+        .to(".z1", {
+          scaleX: 1,
+          duration: 0.15,
+          ease: "power2.out"
+        });
+
+      /* prepare both 1s */
+      tl.set([".o1", ".o1-clone"], {
+        opacity: 1,
+        y: 0
+      });
+
+      /* drop BOTH together */
+      tl.to([".o1", ".o1-clone"], {
+        y: 190,
+        duration: 0.45,
+        ease: "power2.in"
+      }, "-=0.2")
+
+        /* single bounce up (together) */
+        .to([".o1", ".o1-clone"], {
+          y: 155,
+          duration: 0.25,
+          ease: "power2.out"
+        })
+
+        /* settle (together) */
+        .to([".o1", ".o1-clone"], {
+          y: 190,
+          duration: 0.2,
+          ease: "power2.in"
+        })
+
+        /* split AFTER settle */
+        .to(".o1-clone", {
+          x: -145,
+          duration: 0.5,
+          ease: "power2.inOut"
+        });
+    }); // End requestAnimationFrame
+
+    // Cleanup - CRITICAL: restore overflow and kill animation if component unmounts
     return () => {
-      tl.kill();
+      if (tl) tl.kill();
       document.body.style.overflow = 'auto';
     };
   }, []); // Empty deps - only run ONCE on mount

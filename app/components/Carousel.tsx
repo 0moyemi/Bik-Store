@@ -6,8 +6,8 @@ import Image from "next/image"
 const Carousel = () => {
     // Array of slide objects with image/video paths
     const slides = [
-        { id: 0, type: "video", src: "/carousel-vid.mp4", alt: "Promotional Video" },
         { id: 3, type: "image", src: "/track-store.png", alt: "Slide 2" },
+        { id: 0, type: "video", src: "/carousel-vid.mp4", alt: "Promotional Video" },
         { id: 2, type: "image", src: "/48h-delivery.png", alt: "Slide 3" },
         { id: 4, type: "image", src: "/livechatonWA.png", alt: "Slide 4" },
         { id: 5, type: "image", src: "/track-store.png", alt: "Slide 5" },
