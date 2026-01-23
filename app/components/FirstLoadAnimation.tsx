@@ -30,8 +30,11 @@ export default function FirstLoadAnimation() {
     // Check if animation has already played in this session
     const hasAnimated = sessionStorage.getItem('firstLoadAnimationPlayed');
 
+    console.log('FirstLoadAnimation - hasAnimated:', hasAnimated); // DEBUG
+
     if (hasAnimated) {
       // Animation already played, ensure body is scrollable and content is visible
+      console.log('Skipping animation - already played'); // DEBUG
       document.body.style.overflow = 'auto';
       const pageContent = document.getElementById('page-content');
       if (pageContent) {
@@ -40,6 +43,8 @@ export default function FirstLoadAnimation() {
       return;
     }
 
+    console.log('Playing animation for the first time'); // DEBUG
+
     // Show animation and mark as played IMMEDIATELY
     setIsVisible(true);
     sessionStorage.setItem('firstLoadAnimationPlayed', 'true');
@@ -47,15 +52,15 @@ export default function FirstLoadAnimation() {
     // Lock scrolling during animation
     document.body.style.overflow = 'hidden';
 
-    // Store timeline reference for cleanup
-    let tl: gsap.core.Timeline | null = null;
+    // Set GSAP defaults exactly as in the original
+    gsap.defaults({ ease: "power3.out" });
+
+    // Store timeline reference for cleanup outside requestAnimationFrame
+    let tl: gsap.core.Timeline;
 
     // CRITICAL: Wait for React to render the DOM elements before animating
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
-      // Set GSAP defaults exactly as in the original
-      gsap.defaults({ ease: "power3.out" });
-
       tl = gsap.timeline({
         delay: 0.2,
         onComplete: () => {
