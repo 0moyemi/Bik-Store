@@ -82,7 +82,6 @@ export default function RootLayout({
       <head>
         <style dangerouslySetInnerHTML={{
           __html: `
-          body { overflow: hidden; }
           #page-content { opacity: 0; }
         `}} />
       </head>

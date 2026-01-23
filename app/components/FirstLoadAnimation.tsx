@@ -1,124 +1,151 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 
 export default function FirstLoadAnimation() {
-    const [isVisible, setIsVisible] = useState(true);
-    const [isFadingOut, setIsFadingOut] = useState(false);
-    const hasAnimated = useRef(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const pathname = usePathname();
 
-    useEffect(() => {
-        // Only run once on first load
-        if (hasAnimated.current) return;
-        hasAnimated.current = true;
+  useEffect(() => {
+    // Skip animation on admin routes
+    if (pathname?.startsWith('/admin')) {
+      document.body.style.overflow = 'auto';
+      const pageContent = document.getElementById('page-content');
+      if (pageContent) {
+        pageContent.style.opacity = '1';
+      }
+      return;
+    }
 
-        // Set GSAP defaults exactly as in the original
-        gsap.defaults({ ease: "power3.out" });
+    // Check if animation has already played in this session
+    const hasAnimated = sessionStorage.getItem('firstLoadAnimationPlayed');
 
-        const tl = gsap.timeline({
-            delay: 0.2,
-            onComplete: () => {
-                // Start fade out
-                setTimeout(() => {
-                    setIsFadingOut(true);
-                    // Show page content and remove loader
-                    const pageContent = document.getElementById('page-content');
-                    if (pageContent) {
-                        pageContent.style.opacity = '1';
-                        pageContent.style.transition = 'opacity 0.6s ease-in';
-                    }
-                    setTimeout(() => {
-                        setIsVisible(false);
-                        document.body.style.overflow = 'auto';
-                    }, 600);
-                }, 500);
-            }
-        });
+    if (hasAnimated) {
+      // Animation already played, ensure body is scrollable
+      document.body.style.overflow = 'auto';
+      const pageContent = document.getElementById('page-content');
+      if (pageContent) {
+        pageContent.style.opacity = '1';
+      }
+      return;
+    }
 
-        /* ZERO 1 rolls in */
-        tl.to(".z1", {
-            x: 180,
-            duration: 0.8,
-            ease: "elastic.out(1, 0.9)"
-        });
+    // Show animation and mark as played
+    setIsVisible(true);
+    sessionStorage.setItem('firstLoadAnimationPlayed', 'true');
 
-        /* ZERO 2 rolls in */
-        tl.to(".z2", {
-            x: 150,
-            duration: 0.6,
-            ease: "elastic.out(1, 0.4)"
-        }, "-=0.2");
+    // Lock scrolling during animation
+    document.body.style.overflow = 'hidden';
 
-        /* PUSH reaction */
-        tl.to(".z1", {
-            x: 195,
-            scaleX: 0.9,
-            duration: 0.3,
-            ease: "power2.inOut"
-        }, "<")
+    // Set GSAP defaults exactly as in the original
+    gsap.defaults({ ease: "power3.out" });
 
-        // recover shape
-        tl.to(".z1", {
-            scaleX: 1,
-            duration: 0.15,
-            ease: "power2.out"
-        });
+    const tl = gsap.timeline({
+      delay: 0.2,
+      onComplete: () => {
+        // Start fade out
+        setTimeout(() => {
+          setIsFadingOut(true);
+          // Show page content and remove loader
+          const pageContent = document.getElementById('page-content');
+          if (pageContent) {
+            pageContent.style.opacity = '1';
+            pageContent.style.transition = 'opacity 0.6s ease-in';
+          }
+          setTimeout(() => {
+            setIsVisible(false);
+            document.body.style.overflow = 'auto';
+          }, 600);
+        }, 500);
+      }
+    });
 
-        /* prepare both 1s */
-        tl.set([".o1", ".o1-clone"], {
-            opacity: 1,
-            y: 0
-        });
+    /* ZERO 1 rolls in */
+    tl.to(".z1", {
+      x: 180,
+      duration: 0.8,
+      ease: "elastic.out(1, 0.9)"
+    });
 
-        /* drop BOTH together */
-        tl.to([".o1", ".o1-clone"], {
-            y: 190,
-            duration: 0.45,
-            ease: "power2.in"
-        }, "-=0.2")
+    /* ZERO 2 rolls in */
+    tl.to(".z2", {
+      x: 150,
+      duration: 0.6,
+      ease: "elastic.out(1, 0.4)"
+    }, "-=0.2");
 
-            /* single bounce up (together) */
-            .to([".o1", ".o1-clone"], {
-                y: 155,
-                duration: 0.25,
-                ease: "power2.out"
-            })
+    /* PUSH reaction */
+    tl.to(".z1", {
+      x: 195,
+      scaleX: 0.9,
+      duration: 0.3,
+      ease: "power2.inOut"
+    }, "<")
 
-            /* settle (together) */
-            .to([".o1", ".o1-clone"], {
-                y: 190,
-                duration: 0.2,
-                ease: "power2.in"
-            })
+    // recover shape
+    tl.to(".z1", {
+      scaleX: 1,
+      duration: 0.15,
+      ease: "power2.out"
+    });
 
-            /* split AFTER settle */
-            .to(".o1-clone", {
-                x: -145,
-                duration: 0.5,
-                ease: "power2.inOut"
-            });
+    /* prepare both 1s */
+    tl.set([".o1", ".o1-clone"], {
+      opacity: 1,
+      y: 0
+    });
 
-        // Cleanup
-        return () => {
-            tl.kill();
-        };
-    }, []);
+    /* drop BOTH together */
+    tl.to([".o1", ".o1-clone"], {
+      y: 190,
+      duration: 0.45,
+      ease: "power2.in"
+    }, "-=0.2")
 
-    if (!isVisible) return null;
+      /* single bounce up (together) */
+      .to([".o1", ".o1-clone"], {
+        y: 155,
+        duration: 0.25,
+        ease: "power2.out"
+      })
 
-    return (
-        <div className={`first-load-overlay ${isFadingOut ? 'fade-out' : ''}`}>
-            <div className="animation-wrapper">
-                <div className="stage">
-                    <div className="zero z1"></div>
-                    <div className="zero z2"></div>
-                    <div className="one o1"></div>
-                    <div className="one o1-clone"></div>
-                </div>
-            </div>
+      /* settle (together) */
+      .to([".o1", ".o1-clone"], {
+        y: 190,
+        duration: 0.2,
+        ease: "power2.in"
+      })
 
-            <style jsx>{`
+      /* split AFTER settle */
+      .to(".o1-clone", {
+        x: -145,
+        duration: 0.5,
+        ease: "power2.inOut"
+      });
+
+    // Cleanup
+    return () => {
+      tl.kill();
+    };
+  }, [pathname]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div className={`first-load-overlay ${isFadingOut ? 'fade-out' : ''}`}>
+      <div className="animation-wrapper">
+        <div className="stage">
+          <div className="zero z1"></div>
+          <div className="zero z2"></div>
+          <div className="one o1"></div>
+          <div className="one o1-clone"></div>
+        </div>
+      </div>
+
+      <style jsx>{`
         :root {
           --loader-scale: 1;
         }
@@ -203,6 +230,6 @@ export default function FirstLoadAnimation() {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
