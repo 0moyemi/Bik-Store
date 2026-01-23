@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
 
@@ -9,6 +9,13 @@ export default function FirstLoadAnimation() {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const pathname = usePathname();
 
+  // Separate effect for overflow reset on route changes
+  useEffect(() => {
+    // CRITICAL: Reset overflow on EVERY route change to prevent stuck scroll
+    document.body.style.overflow = 'auto';
+  }, [pathname]);
+
+  // Animation effect - runs ONCE on mount
   useEffect(() => {
     // Skip animation on admin routes
     if (pathname?.startsWith('/admin')) {
@@ -24,7 +31,7 @@ export default function FirstLoadAnimation() {
     const hasAnimated = sessionStorage.getItem('firstLoadAnimationPlayed');
 
     if (hasAnimated) {
-      // Animation already played, ensure body is scrollable
+      // Animation already played, ensure body is scrollable and content is visible
       document.body.style.overflow = 'auto';
       const pageContent = document.getElementById('page-content');
       if (pageContent) {
@@ -33,7 +40,7 @@ export default function FirstLoadAnimation() {
       return;
     }
 
-    // Show animation and mark as played
+    // Show animation and mark as played IMMEDIATELY
     setIsVisible(true);
     sessionStorage.setItem('firstLoadAnimationPlayed', 'true');
 
@@ -126,11 +133,12 @@ export default function FirstLoadAnimation() {
         ease: "power2.inOut"
       });
 
-    // Cleanup
+    // Cleanup - CRITICAL: restore overflow and kill animation if route changes mid-animation
     return () => {
       tl.kill();
+      document.body.style.overflow = 'auto';
     };
-  }, [pathname]);
+  }, []); // Empty deps - only run ONCE on mount
 
   if (!isVisible) return null;
 
