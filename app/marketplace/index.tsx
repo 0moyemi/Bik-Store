@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { Product } from '@/app/types'
 import CategoryPills from '@/app/components/CategoryPills'
 import Modal from '@/app/components/Modal'
@@ -9,6 +10,20 @@ import { useCart } from '@/app/context/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Eye } from 'lucide-react'
+
+// Lazy load virtualized grid for better initial load
+const VirtualizedProductGrid = dynamic(() => import('@/app/components/VirtualizedProductGrid'), {
+    ssr: false,
+    loading: () => (
+        <div className="p-8">
+            <div className="grid grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                    <div key={i} className="glass-card rounded-lg overflow-hidden border border-white/10 animate-pulse h-96" />
+                ))}
+            </div>
+        </div>
+    )
+})
 
 const categories = [
     { name: "Abaya" },
@@ -29,6 +44,31 @@ const Marketplace = () => {
     const [selectCategory, setSelectCategory] = useState('All Products')
     const [addedProduct, setAddedProduct] = useState<Product | null>(null)
     const [flashingCart, setFlashingCart] = useState<string | null>(null)
+    // Initialize virtualization based on screen size immediately
+    const [useVirtualization, setUseVirtualization] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
+    )
+
+    // Detect large screen for virtualization
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout
+
+        const checkScreenSize = () => {
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(() => {
+                setUseVirtualization(window.innerWidth >= 1024)
+            }, 150)
+        }
+
+        // Set immediately on mount
+        setUseVirtualization(window.innerWidth >= 1024)
+
+        window.addEventListener('resize', checkScreenSize)
+        return () => {
+            clearTimeout(timeoutId)
+            window.removeEventListener('resize', checkScreenSize)
+        }
+    }, [])
 
     // Reset modal on route change
     useEffect(() => {
@@ -147,7 +187,7 @@ const Marketplace = () => {
                 <>
                     {/* Featured/Latest Products - Horizontal Scroll */}
                     {!search && selectCategory === 'All Products' && latestProducts.length > 0 && (
-                        <section className="px-4 lg:px-8 py-6 lg:py-8 bg-background border-b border-border">
+                        <section className="product-section px-4 lg:px-8 py-6 lg:py-8 bg-background border-b border-border">
                             <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-4 lg:mb-8">Latest in Store</h2>
                             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
                                 <div className="flex gap-3 lg:gap-6 pb-2">
@@ -164,6 +204,9 @@ const Marketplace = () => {
                                                         alt={product.name}
                                                         width={288}
                                                         height={240}
+                                                        sizes="(max-width: 768px) 176px, (max-width: 1024px) 250px, 288px"
+                                                        quality={80}
+                                                        loading="lazy"
                                                         className="object-cover w-full h-full"
                                                     />
                                                 ) : (
@@ -182,7 +225,7 @@ const Marketplace = () => {
                     )}
 
                     {/* Main Product Grid - 2 Columns Mobile, 4 Desktop */}
-                    <div className="bg-background">
+                    <div className="product-section bg-background">
                         <div className="px-4 lg:px-8 pt-4 lg:pt-6 pb-2">
                             <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-3 lg:mb-6">Browse Collections</h2>
                         </div>
@@ -195,7 +238,15 @@ const Marketplace = () => {
                             <div className="p-8 text-center text-muted-foreground">
                                 No products found {search && `for "${search}"`}
                             </div>
+                        ) : useVirtualization ? (
+                            /* Use virtualized grid on large screens for better performance */
+                            <VirtualizedProductGrid
+                                products={filteredProducts}
+                                onAddToCart={addToCart}
+                                flashingCart={flashingCart}
+                            />
                         ) : (
+                            /* Regular grid for mobile/tablet */
                             <div className="p-4 lg:px-8 lg:py-6 pt-3">
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                                     {filteredProducts.map((product) => (
@@ -212,6 +263,9 @@ const Marketplace = () => {
                                                         alt={product.name}
                                                         width={300}
                                                         height={256}
+                                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                        quality={80}
+                                                        loading="lazy"
                                                         className="object-cover w-full h-full"
                                                     />
                                                 ) : (

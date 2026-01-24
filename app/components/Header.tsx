@@ -15,7 +15,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-card/60 border-b border-white/10 shadow-lg">
+      <header className="sticky top-0 z-50 backdrop-blur-xl lg:backdrop-blur-md bg-card/60 lg:bg-card/80 border-b border-white/10 shadow-lg will-change-transform">
         <div className="flex items-center justify-between px-4 py-2">
           {isHomePage ? (
             <h1 className="text-xl font-bold text-foreground">Bik</h1>

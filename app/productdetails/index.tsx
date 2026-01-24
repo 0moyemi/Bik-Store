@@ -121,6 +121,10 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
               alt={product.name}
               width={400}
               height={320}
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 600px, 800px"
+              quality={85}
+              priority={currentImage === 0}
+              loading={currentImage === 0 ? undefined : "lazy"}
               className="object-contain w-full h-full"
             />
           ) : (

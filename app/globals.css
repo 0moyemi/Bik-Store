@@ -213,6 +213,36 @@
     background-attachment: fixed;
   }
 
+  /* Performance optimizations for large screens */
+  @media (min-width: 1024px) {
+    * {
+      /* Hardware acceleration for smooth scrolling */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      /* Optimize scrolling performance */
+      overflow-y: scroll;
+      scroll-behavior: auto;
+      /* Disable smooth scroll for better perf */
+      /* Remove fixed background on large screens */
+      background-attachment: scroll;
+    }
+
+    /* Disable transitions during scroll for better performance */
+    * {
+      animation-duration: 0s !important;
+      transition-duration: 0s !important;
+    }
+
+    /* Re-enable transitions on hover only */
+    *:hover {
+      animation-duration: 0.2s !important;
+      transition-duration: 0.2s !important;
+    }
+  }
+
   /* Animated gradient blobs background - only on mobile for performance */
   @media (max-width: 1023px) {
     body::before {
@@ -276,10 +306,30 @@
       inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   }
 
+  @media (min-width: 1024px) {
+    .glass-card {
+      box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+    }
+  }
+
   /* Enhanced glass effect for interactive elements */
   .glass-interactive {
     @apply backdrop-blur-xl lg:backdrop-blur-none bg-card/50 lg:bg-card/90 border border-white/[0.08];
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Simplified hover for large screens - no heavy effects */
+  @media (min-width: 1024px) {
+    .glass-interactive {
+      box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
+      transition: border-color 0.2s ease;
+    }
+
+    .glass-interactive:hover {
+      @apply border-white/[0.15];
+      box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
+      transform: none;
+    }
   }
 
   @media (max-width: 1023px) {
@@ -288,21 +338,13 @@
         0 4px 24px 0 rgba(0, 0, 0, 0.25),
         inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
     }
-  }
 
-  @media (max-width: 1023px) {
     .glass-interactive:hover {
       @apply border-white/[0.15] bg-card/70;
       box-shadow:
         0 8px 32px 0 rgba(0, 0, 0, 0.4),
         inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
       transform: translateY(-2px);
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .glass-interactive:hover {
-      @apply border-white/[0.15];
     }
   }
 
@@ -316,11 +358,15 @@
 
   /* Glow effects - disabled on large screens for performance */
   .glow-blue {
-    @apply transition-all duration-300;
-    transform: translateZ(0);
+    transition: border-color 0.2s ease;
   }
 
   @media (max-width: 1023px) {
+    .glow-blue {
+      transition: all 0.3s ease;
+      transform: translateZ(0);
+    }
+
     .glow-blue:hover {
       box-shadow:
         0 0 12px rgba(37, 99, 235, 0.25),
@@ -328,10 +374,17 @@
     }
   }
 
+  /* Reduce glow-blue-active intensity on large screens */
   .glow-blue-active {
     box-shadow:
       0 0 16px rgba(37, 99, 235, 0.3),
       0 0 28px rgba(37, 99, 235, 0.15);
+  }
+
+  @media (min-width: 1024px) {
+    .glow-blue-active {
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    }
   }
 
   /* Flash effect for cart icon */
@@ -411,5 +464,14 @@
 
   .scrollbar-glass::-webkit-scrollbar-thumb:hover {
     background: oklch(0.5 0.18 264 / 0.5);
+  }
+
+  /* Performance optimization - use content-visibility for off-screen content */
+  @media (min-width: 1024px) {
+    .product-section {
+      content-visibility: auto;
+      contain-intrinsic-size: 0 400px;
+      /* Estimated height */
+    }
   }
 }

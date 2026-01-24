@@ -55,6 +55,7 @@ const Carousel = () => {
                                     loop
                                     muted
                                     playsInline
+                                    preload="metadata"
                                     className="w-full h-full object-cover"
                                     onEnded={(e) => {
                                         // Backup to ensure video loops if loop attribute fails
@@ -67,8 +68,11 @@ const Carousel = () => {
                                     src={slides[current].src}
                                     alt={slides[current].alt}
                                     fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 90vw, 1024px"
+                                    quality={85}
                                     className="object-cover"
                                     priority={current === 1}
+                                    loading={current === 1 ? undefined : "lazy"}
                                 />
                             )
                         )}

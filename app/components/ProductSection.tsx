@@ -36,6 +36,9 @@ const ProductSection = ({ title, products, onAddToCart }: ProductSectionProps) =
                                         alt={product.name}
                                         width={208}
                                         height={200}
+                                        sizes="(max-width: 768px) 208px, (max-width: 1024px) 250px, 300px"
+                                        quality={80}
+                                        loading="lazy"
                                         className="object-cover w-full h-full"
                                     />
                                 ) : (
