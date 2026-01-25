@@ -4,12 +4,11 @@ import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Product } from '@/app/types'
 import CategoryPills from '@/app/components/CategoryPills'
-import Modal from '@/app/components/Modal'
 import Searchbar from '@/app/components/Searchbar'
+import Toast from '@/app/components/Toast'
 import { useCart } from '@/app/context/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingCart } from 'lucide-react'
 
 // Lazy load virtualized grid for better initial load
 const VirtualizedProductGrid = dynamic(() => import('@/app/components/VirtualizedProductGrid'), {
@@ -36,13 +35,14 @@ const categories = [
 const Marketplace = () => {
     const pathname = usePathname()
     const { updateCartCount } = useCart()
-    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showToast, setShowToast] = useState(false)
     const [products, setProducts] = useState<Product[]>([])
     const [latestProducts, setLatestProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [selectCategory, setSelectCategory] = useState('All Products')
     const [addedProduct, setAddedProduct] = useState<Product | null>(null)
+    const [addingProductId, setAddingProductId] = useState<string | null>(null)
     // Initialize virtualization based on screen size immediately
     const [useVirtualization, setUseVirtualization] = useState(() =>
         typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
@@ -69,27 +69,17 @@ const Marketplace = () => {
         }
     }, [])
 
-    // Reset modal on route change
+    // Reset toast on route change
     useEffect(() => {
-        setShowSuccessModal(false)
-        document.body.style.overflow = ''
+        setShowToast(false)
     }, [pathname])
-
-    // Scroll lock for modal
-    useEffect(() => {
-        if (showSuccessModal) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
-        }
-        return () => {
-            document.body.style.overflow = ''
-        }
-    }, [showSuccessModal])
 
     const addToCart = (e: React.MouseEvent, product: Product) => {
         e.preventDefault()
         e.stopPropagation()
+
+        if (addingProductId) return
+        setAddingProductId(product._id)
 
         const cart = JSON.parse(localStorage.getItem("cart") || "[]")
         const existing = cart.find((item: any) => item._id === product._id)
@@ -103,7 +93,9 @@ const Marketplace = () => {
         localStorage.setItem("cart", JSON.stringify(cart))
         updateCartCount()
         setAddedProduct(product)
-        setShowSuccessModal(true)
+        setShowToast(true)
+
+        setTimeout(() => setAddingProductId(null), 1000)
     }
 
     // Fisher-Yates shuffle algorithm
@@ -209,8 +201,25 @@ const Marketplace = () => {
                                                 )}
                                             </div>
                                             <div className="p-3 lg:p-5">
-                                                <p className="text-sm lg:text-lg font-medium text-foreground truncate">{product.name}</p>
-                                                <p className="text-primary font-bold text-base lg:text-2xl">₦{product.price.toLocaleString()}</p>
+                                                <p className="text-sm lg:text-lg font-medium text-foreground truncate mb-2">{product.name}</p>
+                                                {/* Price and Buy Now button on same row */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="text-primary font-bold text-base lg:text-2xl">₦{product.price.toLocaleString()}</p>
+                                                    <button
+                                                        onClick={(e) => addToCart(e, product)}
+                                                        disabled={addingProductId === product._id}
+                                                        className="glow-blue-active bg-primary text-primary-foreground px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm font-bold hover:opacity-90 transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                                    >
+                                                        {addingProductId === product._id ? (
+                                                            <>
+                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                                <span className="hidden lg:inline">Adding...</span>
+                                                            </>
+                                                        ) : (
+                                                            'Buy Now'
+                                                        )}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </Link>
                                     ))}
@@ -238,6 +247,7 @@ const Marketplace = () => {
                             <VirtualizedProductGrid
                                 products={filteredProducts}
                                 onAddToCart={addToCart}
+                                addingProductId={addingProductId}
                             />
                         ) : (
                             /* Regular grid for mobile/tablet */
@@ -272,17 +282,26 @@ const Marketplace = () => {
                                                 <p className="text-sm lg:text-base font-medium text-foreground mb-1 truncate">{product.name}</p>
                                                 <p className="text-primary font-bold mb-3 lg:mb-4 text-base lg:text-xl">₦{product.price.toLocaleString()}</p>
 
-                                                {/* Action Buttons */}
-                                                <div className="flex gap-2">
-                                                    <button className="glow-blue flex-1 flex items-center justify-center gap-1 lg:gap-2 bg-primary text-primary-foreground py-2 lg:py-3 rounded-full text-xs lg:text-sm font-medium hover:opacity-90">
-                                                        {/* <Eye size={14} className="lg:w-5 lg:h-5" /> */}
-                                                        View details
-                                                    </button>
+                                                {/* Action Buttons - UX optimized for non-technical users */}
+                                                <div className="flex flex-col gap-2">
+                                                    {/* Primary action: Buy - Most prominent */}
                                                     <button
                                                         onClick={(e) => addToCart(e, product)}
-                                                        className="glow-blue flex-shrink-0 w-9 h-9 lg:w-12 lg:h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-all"
+                                                        disabled={addingProductId === product._id}
+                                                        className="glow-blue-active w-full bg-primary text-primary-foreground py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                     >
-                                                        <ShoppingCart size={14} className="lg:w-5 lg:h-5" />
+                                                        {addingProductId === product._id ? (
+                                                            <>
+                                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                                Adding...
+                                                            </>
+                                                        ) : (
+                                                            'Buy Item Now'
+                                                        )}
+                                                    </button>
+                                                    {/* Secondary action: View details - Less prominent */}
+                                                    <button className="w-full glass-interactive text-foreground py-2 lg:py-2.5 rounded-lg text-xs lg:text-sm font-medium hover:bg-white/10 transition-all border border-white/20">
+                                                        View Item Details
                                                     </button>
                                                 </div>
                                             </div>
@@ -295,12 +314,13 @@ const Marketplace = () => {
                 </>
             )}
 
-            {/* Success Modal */}
-            {showSuccessModal && addedProduct && (
-                <Modal
-                    title="Added to Cart!"
-                    message={`${addedProduct.name} has been added to your cart.`}
-                    onClose={() => setShowSuccessModal(false)}
+            {/* Toast Notification - Clear feedback for non-technical users */}
+            {showToast && addedProduct && (
+                <Toast
+                    message={`✓ 1 item added to your cart! Tap the CART button at the top of the page to continue your order.`}
+                    onClose={() => setShowToast(false)}
+                    type="success"
+                    duration={6000}
                 />
             )}
         </>

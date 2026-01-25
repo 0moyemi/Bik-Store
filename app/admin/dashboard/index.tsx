@@ -117,14 +117,16 @@ const AdminDashboard = () => {
       return
     }
 
-    // Combine images and videos into one array
-    const allMedia = [...formData.images, ...formData.videos]
+    // Combine images and videos into one array, filtering out empty strings
+    const cleanImages = formData.images.filter(img => img && img.trim() !== '')
+    const cleanVideos = formData.videos.filter(vid => vid && vid.trim() !== '')
+    const allMedia = [...cleanImages, ...cleanVideos]
 
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      features: formData.features.filter(f => f.trim() !== ''),
-      images: allMedia.filter(i => i.trim() !== '')
+      features: formData.features.filter(f => f && f.trim() !== ''),
+      images: allMedia
     }
 
     try {

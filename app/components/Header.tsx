@@ -22,7 +22,7 @@ const Header = () => {
               className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
             >
               <ArrowLeft size={20} />
-              <span className="text-sm font-medium">Back</span>
+              <span className="text-sm font-bold">Back</span>
             </button>
           )}
 
@@ -33,9 +33,9 @@ const Header = () => {
               className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors relative"
             >
               <ShoppingCart size={18} />
-              <span className="text-sm font-medium">Cart</span>
+              <span className="text-l font-bold">Cart</span>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -48,7 +48,7 @@ const Header = () => {
               className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
             >
               <Mail size={18} />
-              <span className="text-sm font-medium">About</span>
+              <span className="text-l font-bold">About</span>
             </Link>
           </div>
         </div>

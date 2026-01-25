@@ -12,6 +12,7 @@ const Checkout = () => {
   const { updateCartCount } = useCart()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [orderComplete, setOrderComplete] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -24,24 +25,44 @@ const Checkout = () => {
     address: '',
     city: ''
   })
+  const [hasFormData, setHasFormData] = useState(false)
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     setCartItems(cart)
 
-    if (cart.length === 0) {
+    // Only redirect to cart if empty AND order is not complete
+    if (cart.length === 0 && !orderComplete) {
       router.push('/cart')
     }
-  }, [])
+
+    // Warn user before leaving page if form has data
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasFormData && !orderComplete) {
+        e.preventDefault()
+        e.returnValue = 'You have unsaved information. Are you sure you want to leave?'
+        return e.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasFormData, orderComplete])
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData({ ...formData, [field]: value })
     // Clear error when user starts typing
     setErrors({ ...errors, [field]: '' })
+    // Track that user has entered data
+    if (value.trim()) {
+      setHasFormData(true)
+    }
   }
 
   const handleCompleteOrder = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isSubmitting) return
 
     // Validate all fields
     const nameValidation = validateName(formData.fullName, 'Full name')
@@ -65,9 +86,15 @@ const Checkout = () => {
       return
     }
 
-    localStorage.removeItem("cart")
-    updateCartCount()
-    setOrderComplete(true)
+    setIsSubmitting(true)
+
+    // Simulate processing delay for better UX feedback
+    setTimeout(() => {
+      localStorage.removeItem("cart")
+      updateCartCount()
+      setOrderComplete(true)
+      setIsSubmitting(false)
+    }, 1500)
   }
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -96,9 +123,32 @@ const Checkout = () => {
 
   return (
     <div className="p-4 max-w-2xl mx-auto pb-6">
+      {/* Step Indicator - UX for non-technical users */}
+      <div className="mb-6">
+        <div className="flex items-center justify-center gap-1 lg:gap-2 mb-4 overflow-x-auto">
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs lg:text-sm font-bold">✓</div>
+            <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Items Selected</span>
+          </div>
+          <div className="w-8 lg:w-12 h-0.5 bg-border flex-shrink-0"></div>
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs lg:text-sm font-bold">✓</div>
+            <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Cart Reviewed</span>
+          </div>
+          <div className="w-8 lg:w-12 h-0.5 bg-border flex-shrink-0"></div>
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs lg:text-sm font-bold">3</div>
+            <span className="text-xs font-medium text-foreground hidden sm:inline">Payment & Delivery</span>
+          </div>
+        </div>
+        <h1 className="text-xl lg:text-2xl font-bold text-foreground text-center mb-2">Step 3 of 3: Payment & Delivery</h1>
+        <p className="text-muted-foreground text-xs lg:text-sm text-center px-2">
+          Enter your details below to complete your order.
+        </p>
+      </div>
+
       {/* Checkout Summary */}
       <section className="mb-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">Checkout</h2>
 
         <div className="bg-card border border-border rounded-lg p-4 space-y-3 mb-6">
           <h3 className="font-bold text-foreground">Order Items</h3>
@@ -203,12 +253,25 @@ const Checkout = () => {
           </div> */}
         </div>
 
+        {/* Clear CTA Button - UX optimized for non-technical users */}
         <button
           type="submit"
-          className="glow-blue-active w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 mt-6 transition-all"
+          disabled={isSubmitting}
+          className="glow-blue-active w-full bg-primary text-primary-foreground py-4 rounded-lg font-bold text-base hover:opacity-90 mt-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Complete Order
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Processing Order...
+            </>
+          ) : (
+            'Pay for Order'
+          )}
         </button>
+        {/* Helper text */}
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          {isSubmitting ? 'Please wait, do not close this page...' : 'Your order will be processed after you click this button.'}
+        </p>
       </form>
     </div>
   )

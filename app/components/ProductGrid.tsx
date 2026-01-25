@@ -1,5 +1,4 @@
 "use client"
-import { ShoppingCart, Eye } from "lucide-react"
 
 const ProductGrid = () => {
   const products = Array(8)
@@ -20,14 +19,15 @@ const ProductGrid = () => {
               <p className="text-sm lg:text-base font-medium text-foreground mb-1 truncate">Product Name</p>
               <p className="text-primary font-bold mb-3 lg:mb-4 text-base lg:text-xl">₦5,999</p>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button className="glow-blue-active flex-1 flex items-center justify-center gap-1 lg:gap-2 bg-primary text-primary-foreground py-2 lg:py-3 rounded-full text-xs lg:text-sm font-medium hover:opacity-90 transition-all">
-                  <Eye size={14} className="lg:w-5 lg:h-5" />
-                  Details
+              {/* Action Buttons - UX optimized for non-technical users */}
+              <div className="flex flex-col gap-2">
+                {/* Primary action: Buy - Most prominent */}
+                <button className="glow-blue-active w-full bg-primary text-primary-foreground py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-bold hover:opacity-90 transition-all">
+                  Buy Item Now
                 </button>
-                <button className="glow-blue flex-shrink-0 w-9 h-9 lg:w-12 lg:h-12 glass-interactive rounded-full flex items-center justify-center hover:scale-105 transition-all">
-                  <ShoppingCart size={14} className="lg:w-5 lg:h-5 text-foreground" />
+                {/* Secondary action: View details - Less prominent */}
+                <button className="w-full glass-interactive text-foreground py-2 lg:py-2.5 rounded-lg text-xs lg:text-sm font-medium hover:bg-white/10 transition-all border border-white/20">
+                  View Item Details
                 </button>
               </div>
             </div>

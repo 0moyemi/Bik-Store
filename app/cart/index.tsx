@@ -55,14 +55,44 @@ const Cart = () => {
 
   return (
     <div className="p-4 pb-6">
+      {/* Step Indicator - UX for non-technical users */}
+      <div className="mb-6">
+        <div className="flex items-center justify-center gap-1 lg:gap-2 mb-4 overflow-x-auto">
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs lg:text-sm font-bold">✓</div>
+            <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Items Selected</span>
+          </div>
+          <div className="w-8 lg:w-12 h-0.5 bg-border flex-shrink-0"></div>
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs lg:text-sm font-bold">2</div>
+            <span className="text-xs font-medium text-foreground hidden sm:inline">Review Cart</span>
+          </div>
+          <div className="w-8 lg:w-12 h-0.5 bg-border flex-shrink-0"></div>
+          <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs lg:text-sm font-bold">3</div>
+            <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Payment & Delivery</span>
+          </div>
+        </div>
+        <h1 className="text-xl lg:text-2xl font-bold text-foreground text-center mb-2">Step 2 of 3: Review Your Cart</h1>
+        <p className="text-muted-foreground text-xs lg:text-sm text-center px-2">
+          Review your items below and proceed to checkout when ready.
+        </p>
+      </div>
+
       {/* Cart Items */}
       <section className="mb-4">
-        <h2 className="text-xl font-bold text-foreground mb-3">Shopping Cart</h2>
 
         {cartItems.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="mb-2">Your cart is empty</p>
-            <a href="/" className="text-primary hover:underline">Continue shopping</a>
+          <div className="glass-card rounded-lg p-8 text-center border border-white/10">
+            <div className="text-6xl mb-4">🛒</div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Your Cart is Empty</h2>
+            <p className="text-muted-foreground mb-6">Add some items to your cart to get started!</p>
+            <Link
+              href="/"
+              className="glow-blue-active inline-block bg-primary text-primary-foreground px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-all"
+            >
+              Start Shopping
+            </Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -133,12 +163,17 @@ const Cart = () => {
               <span>₦{total.toLocaleString()}</span>
             </div>
           </div>
+          {/* Clear CTA Button - UX optimized for non-technical users */}
           <Link
             href="/checkout"
-            className="glow-blue-active w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 block text-center transition-all"
+            className="glow-blue-active w-full bg-primary text-primary-foreground py-4 rounded-lg font-bold text-base hover:opacity-90 block text-center transition-all"
           >
-            Proceed to Checkout
+            Proceed to Payment & Delivery Details
           </Link>
+          {/* Helper text to guide user */}
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            You will enter your delivery address and payment information next.
+          </p>
         </section>
       )}
 

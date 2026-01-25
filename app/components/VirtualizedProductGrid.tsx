@@ -3,15 +3,15 @@ import { useEffect, useState, ReactElement } from 'react'
 import { Grid } from 'react-window'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingCart, Eye } from 'lucide-react'
 import { Product } from '@/app/types'
 
 interface VirtualizedProductGridProps {
     products: Product[]
     onAddToCart: (e: React.MouseEvent, product: Product) => void
+    addingProductId: string | null
 }
 
-const VirtualizedProductGrid = ({ products, onAddToCart }: VirtualizedProductGridProps) => {
+const VirtualizedProductGrid = ({ products, onAddToCart, addingProductId }: VirtualizedProductGridProps) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
     useEffect(() => {
@@ -74,17 +74,26 @@ const VirtualizedProductGrid = ({ products, onAddToCart }: VirtualizedProductGri
                         <p className="text-base font-medium text-foreground mb-1 truncate">{product.name}</p>
                         <p className="text-primary font-bold mb-4 text-xl">₦{product.price.toLocaleString()}</p>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                            <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
-                                <Eye size={20} />
-                                View
-                            </button>
+                        {/* Action Buttons - UX optimized for non-technical users */}
+                        <div className="flex flex-col gap-2">
+                            {/* Primary action: Buy - Most prominent */}
                             <button
                                 onClick={(e) => onAddToCart(e, product)}
-                                className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-all"
+                                disabled={addingProductId === product._id}
+                                className="glow-blue-active w-full bg-primary text-primary-foreground py-3 rounded-lg text-base font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <ShoppingCart size={20} />
+                                {addingProductId === product._id ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Adding...
+                                    </>
+                                ) : (
+                                    'Buy Item Now'
+                                )}
+                            </button>
+                            {/* Secondary action: View details - Less prominent */}
+                            <button className="w-full glass-interactive text-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-white/10 transition-all border border-white/20">
+                                View Item Details
                             </button>
                         </div>
                     </div>

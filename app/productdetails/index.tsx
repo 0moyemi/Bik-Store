@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Product } from "@/app/types"
 import Image from "next/image"
 import { useCart } from "@/app/context/CartContext"
-import Modal from "@/app/components/Modal"
+import Toast from "@/app/components/Toast"
 
 interface ProductDetailsProps {
   productId: string
@@ -15,9 +15,10 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
   const [currentImage, setCurrentImage] = useState(0)
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showToast, setShowToast] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [isAdding, setIsAdding] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -38,7 +39,9 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
   }, [productId])
 
   const addToCart = () => {
-    if (!product) return
+    if (!product || isAdding) return
+    setIsAdding(true)
+
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const existing = cart.find((item: any) => item._id === product._id)
 
@@ -50,8 +53,11 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
 
     localStorage.setItem("cart", JSON.stringify(cart))
     updateCartCount()
-    setShowSuccessModal(true)
+    setShowToast(true)
     setQuantity(1) // Reset quantity after adding
+
+    // Reset loading state after animation
+    setTimeout(() => setIsAdding(false), 1000)
   }
 
   const hasVideos = product?.images.some(url =>
@@ -224,22 +230,36 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
           </div>
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart Button - UX optimized for non-technical users */}
         <button
           onClick={addToCart}
-          className="glow-blue-active w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+          disabled={isAdding}
+          className="glow-blue-active w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-4 rounded-lg font-bold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ShoppingCart size={20} />
-          Add {quantity > 1 ? `${quantity} Items` : 'to Cart'}
+          {isAdding ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Adding...
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={20} />
+              {quantity > 1 ? `Buy ${quantity} Items Now` : 'Buy Item Now'}
+            </>
+          )}
         </button>
+        <p className="text-xs text-muted-foreground text-center">
+          <strong>Item will be added to your cart</strong>
+        </p>
       </div>
 
-      {/* Success Modal */}
-      {showSuccessModal && product && (
-        <Modal
-          title="Added to Cart!"
-          message={`${product.name} has been added to your cart.`}
-          onClose={() => setShowSuccessModal(false)}
+      {/* Toast Notification - Clear feedback for non-technical users */}
+      {showToast && product && (
+        <Toast
+          message={`✓ ${quantity > 1 ? `${quantity} items` : '1 item'} added to your cart! Tap the CART button at the top of the page to continue your order.`}
+          onClose={() => setShowToast(false)}
+          type="success"
+          duration={6000}
         />
       )}
 

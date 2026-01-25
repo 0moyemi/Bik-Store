@@ -1,5 +1,4 @@
 "use client"
-import { ShoppingCart } from "lucide-react"
 import { Product } from "@/app/types"
 import Image from "next/image"
 import Link from "next/link"
@@ -51,16 +50,18 @@ const ProductSection = ({ title, products, onAddToCart }: ProductSectionProps) =
                                 <p className="text-base font-medium text-foreground mb-1 truncate">{product.name}</p>
                                 <p className="text-accent font-bold mb-4 text-lg">₦{product.price.toLocaleString()}</p>
 
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                    <button className="glow-blue-active flex-1 flex items-center justify-center gap-2 bg-accent text-accent-foreground px-4 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-all">
-                                        <span>View details</span>
-                                    </button>
+                                {/* Action Buttons - UX optimized for non-technical users */}
+                                <div className="flex flex-col gap-2">
+                                    {/* Primary action: Buy - Most prominent */}
                                     <button
                                         onClick={(e) => onAddToCart(e, product)}
-                                        className="glow-blue flex-shrink-0 w-11 h-11 glass-interactive rounded-full flex items-center justify-center hover:scale-105 transition-all"
+                                        className="glow-blue-active w-full bg-accent text-accent-foreground py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-all"
                                     >
-                                        <ShoppingCart size={18} className="text-foreground" />
+                                        Buy Item Now
+                                    </button>
+                                    {/* Secondary action: View details - Less prominent */}
+                                    <button className="w-full glass-interactive text-foreground py-2 rounded-lg text-xs font-medium hover:bg-white/10 transition-all border border-white/20">
+                                        View Item Details
                                     </button>
                                 </div>
                             </div>
