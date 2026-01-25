@@ -170,7 +170,7 @@ export default function FirstLoadAnimation() {
           inset: 0;
           display: grid;
           place-items: center;
-          background: oklch(0.10 0.015 264);
+          background: oklch(0.96 0.005 264);
           z-index: 9999;
           overflow: hidden;
           opacity: 1;
@@ -186,7 +186,7 @@ export default function FirstLoadAnimation() {
           justify-content: center;
           align-items: center;
           transform: scale(0.4);
-          padding-left: 115px;
+          padding-left: 93px;
           padding-right: 50px;
         }
 
@@ -199,7 +199,7 @@ export default function FirstLoadAnimation() {
         .zero {
           width: 80px;
           height: 120px;
-          border: 12px solid white;
+          border: 12px solid oklch(0.15 0.015 264);
           border-radius: 50%;
           position: absolute;
           top: 15px;
@@ -216,7 +216,7 @@ export default function FirstLoadAnimation() {
         .one {
           width: 12px;
           height: 110px;
-          background: white;
+          background: oklch(0.15 0.015 264);
           position: absolute;
           top: -170px;
           left: 40px;

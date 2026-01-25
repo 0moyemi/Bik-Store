@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 export default function ThemeSwitch() {
-    const [theme, setTheme] = useState<"dark" | "light">("dark");
+    const [theme, setTheme] = useState<"dark" | "light">("light");
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
         const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-        const preferredTheme = savedTheme || "dark";
+        const preferredTheme = savedTheme || "light";
         setTheme(preferredTheme);
         document.documentElement.classList.remove("dark", "light");
         document.documentElement.classList.add(preferredTheme);

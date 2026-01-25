@@ -78,8 +78,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const theme = localStorage.getItem('theme') || 'light';
+              document.documentElement.classList.remove('dark', 'light');
+              document.documentElement.classList.add(theme);
+            })();
+          `
+        }} />
         <style dangerouslySetInnerHTML={{
           __html: `
           #page-content { opacity: 0; }

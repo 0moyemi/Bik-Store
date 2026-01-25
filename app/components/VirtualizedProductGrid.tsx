@@ -9,10 +9,9 @@ import { Product } from '@/app/types'
 interface VirtualizedProductGridProps {
     products: Product[]
     onAddToCart: (e: React.MouseEvent, product: Product) => void
-    flashingCart: string | null
 }
 
-const VirtualizedProductGrid = ({ products, onAddToCart, flashingCart }: VirtualizedProductGridProps) => {
+const VirtualizedProductGrid = ({ products, onAddToCart }: VirtualizedProductGridProps) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
     useEffect(() => {
@@ -83,11 +82,9 @@ const VirtualizedProductGrid = ({ products, onAddToCart, flashingCart }: Virtual
                             </button>
                             <button
                                 onClick={(e) => onAddToCart(e, product)}
-                                className={`flex-shrink-0 w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center hover:bg-secondary transition-colors ${flashingCart === product._id ? 'flash-blue' : ''
-                                    }`}
+                                className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-all"
                             >
-                                <ShoppingCart size={20} className={`transition-colors ${flashingCart === product._id ? 'text-white' : 'text-foreground'
-                                    }`} />
+                                <ShoppingCart size={20} />
                             </button>
                         </div>
                     </div>

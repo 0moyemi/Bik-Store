@@ -88,34 +88,32 @@ const About = () => {
       </section>
 
       {/* What We Value Section */}
-      <section className="max-w-5xl mx-auto px-4 py-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">
+      <section className="py-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-6 px-4 lg:px-8">
           Why Choose Us
         </h2>
-        <div className="grid md:grid-cols-2 gap-5">
-          {values.map((value, index) => {
-            const Icon = value.icon
-            return (
-              <div
-                key={index}
-                className="glass-card rounded-2xl p-6 hover:glass-strong transition-all duration-300 group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="glass-interactive rounded-xl p-3 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-6 h-6 text-primary" />
+        <div className="overflow-x-auto scrollbar-hide pt-2">
+          <div className="flex gap-4 lg:gap-6 px-4 lg:px-8 pb-2">
+            {values.map((value, index) => {
+              const Icon = value.icon
+              return (
+                <div
+                  key={index}
+                  className="glow-blue flex-shrink-0 w-64 h-64 lg:w-72 lg:h-72 glass-card rounded-2xl p-6 hover:glass-strong transition-all duration-300 group flex flex-col items-center justify-center text-center"
+                >
+                  <div className="glass-interactive rounded-full p-4 lg:p-5 group-hover:bg-primary/20 transition-colors mb-4">
+                    <Icon className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {value.title}
-                    </h3>
-                    <p className="text-foreground/70 text-sm leading-relaxed">
-                      {value.description}
-                    </p>
-                  </div>
+                  <h3 className="text-lg lg:text-xl font-semibold text-foreground mb-3">
+                    {value.title}
+                  </h3>
+                  <p className="text-foreground/70 text-sm lg:text-base leading-relaxed">
+                    {value.description}
+                  </p>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -128,9 +126,9 @@ const About = () => {
           <h2 className="text-2xl font-bold text-foreground mb-4  ">
             Visit Our Store
           </h2>
-          <p className="text-foreground/80 mb-6 max-w-2xl mx-auto">
+          {/* <p className="text-foreground/80 mb-6 max-w-2xl mx-auto">
             We're located in the heart of Oluyole, easy to find and welcoming to all. Stop by to see our collection in person.
-          </p>
+          </p> */}
           <div className="glass-interactive rounded-xl p-6 inline-block">
             <p className="text-lg font-medium text-foreground mb-2">
               No. 22 Big Plaza, Oluyole, Ibadan
@@ -139,7 +137,7 @@ const About = () => {
               Oyo State, Nigeria
             </p>
           </div>
-          <div className="mt-8 pt-8 border-t border-white/10">
+          <div className="mt-3 pt-8 border-t border-white/10">
             <h3 className="text-lg font-semibold text-foreground mb-3">
               Delivery Available
             </h3>
@@ -165,7 +163,7 @@ const About = () => {
               >
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                  className="w-full px-6 py-3 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
                 >
                   <span className="text-lg font-medium text-foreground pr-8">
                     {faq.question}

@@ -9,7 +9,7 @@ import Searchbar from '@/app/components/Searchbar'
 import { useCart } from '@/app/context/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingCart, Eye } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 
 // Lazy load virtualized grid for better initial load
 const VirtualizedProductGrid = dynamic(() => import('@/app/components/VirtualizedProductGrid'), {
@@ -43,7 +43,6 @@ const Marketplace = () => {
     const [search, setSearch] = useState('')
     const [selectCategory, setSelectCategory] = useState('All Products')
     const [addedProduct, setAddedProduct] = useState<Product | null>(null)
-    const [flashingCart, setFlashingCart] = useState<string | null>(null)
     // Initialize virtualization based on screen size immediately
     const [useVirtualization, setUseVirtualization] = useState(() =>
         typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
@@ -91,10 +90,6 @@ const Marketplace = () => {
     const addToCart = (e: React.MouseEvent, product: Product) => {
         e.preventDefault()
         e.stopPropagation()
-
-        // Flash effect
-        setFlashingCart(product._id)
-        setTimeout(() => setFlashingCart(null), 300)
 
         const cart = JSON.parse(localStorage.getItem("cart") || "[]")
         const existing = cart.find((item: any) => item._id === product._id)
@@ -186,9 +181,9 @@ const Marketplace = () => {
             ) : (
                 <>
                     {/* Featured/Latest Products - Horizontal Scroll */}
-                    {!search && selectCategory === 'All Products' && latestProducts.length > 0 && (
-                        <section className="product-section px-4 lg:px-8 py-6 lg:py-8 bg-background border-b border-border">
-                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-4 lg:mb-8">Latest in Store</h2>
+                    {!search && latestProducts.length > 0 && (
+                        <section className="product-section px-4 lg:px-8 py-3 lg:py-4 bg-background border-b border-border">
+                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-3 lg:mb-5">Latest in Store</h2>
                             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
                                 <div className="flex gap-3 lg:gap-6 pb-2">
                                     {latestProducts.map((product) => (
@@ -226,8 +221,8 @@ const Marketplace = () => {
 
                     {/* Main Product Grid - 2 Columns Mobile, 4 Desktop */}
                     <div className="product-section bg-background">
-                        <div className="px-4 lg:px-8 pt-4 lg:pt-6 pb-2">
-                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-3 lg:mb-6">Browse Collections</h2>
+                        <div className="px-4 lg:px-8 pt-3 lg:pt-4 pb-1 lg:pb-2">
+                            <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-2 lg:mb-4">Browse Collections</h2>
                         </div>
                         <CategoryPills
                             categories={categories}
@@ -243,7 +238,6 @@ const Marketplace = () => {
                             <VirtualizedProductGrid
                                 products={filteredProducts}
                                 onAddToCart={addToCart}
-                                flashingCart={flashingCart}
                             />
                         ) : (
                             /* Regular grid for mobile/tablet */
@@ -281,16 +275,14 @@ const Marketplace = () => {
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2">
                                                     <button className="glow-blue flex-1 flex items-center justify-center gap-1 lg:gap-2 bg-primary text-primary-foreground py-2 lg:py-3 rounded-full text-xs lg:text-sm font-medium hover:opacity-90">
-                                                        <Eye size={14} className="lg:w-5 lg:h-5" />
-                                                        View
+                                                        {/* <Eye size={14} className="lg:w-5 lg:h-5" /> */}
+                                                        View details
                                                     </button>
                                                     <button
                                                         onClick={(e) => addToCart(e, product)}
-                                                        className={`glow-blue flex-shrink-0 w-9 h-9 lg:w-12 lg:h-12 bg-card border border-border rounded-full flex items-center justify-center hover:bg-secondary transition-all ${flashingCart === product._id ? 'flash-blue' : ''
-                                                            }`}
+                                                        className="glow-blue flex-shrink-0 w-9 h-9 lg:w-12 lg:h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-all"
                                                     >
-                                                        <ShoppingCart size={14} className={`lg:w-5 lg:h-5 transition-colors ${flashingCart === product._id ? 'text-white' : 'text-foreground'
-                                                            }`} />
+                                                        <ShoppingCart size={14} className="lg:w-5 lg:h-5" />
                                                     </button>
                                                 </div>
                                             </div>
