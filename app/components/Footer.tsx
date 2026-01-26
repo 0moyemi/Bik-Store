@@ -10,31 +10,38 @@ const Footer = () => {
 
     return (
         <footer className="glass-card border-t border-white/10 mt-auto">
-            <div className="max-w-4xl mx-auto px-4 py-5">
-                {/* Contact Buttons */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-4">
-                    <a
-                        href={`https://wa.me/${whatsappNumber}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="glow-blue flex items-center justify-center gap-2 glass-interactive px-5 py-3 rounded-full hover:bg-[#25D366]/10 transition-all w-full sm:w-auto"
-                    >
-                        <Image
-                            src="/whatsapp-icon.svg"
-                            alt="WhatsApp"
-                            width={18}
-                            height={18}
-                        />
-                        <span className="text-sm font-medium text-foreground">WhatsApp</span>
-                    </a>
-                    
-                    <a
-                        href={`tel:${phoneNumber.replace(/\s/g, '')}`}
-                        className="glow-blue flex items-center justify-center gap-2 glass-interactive px-5 py-3 rounded-full hover:bg-primary/10 transition-all w-full sm:w-auto"
-                    >
-                        <Phone size={18} className="text-primary" />
-                        <span className="text-sm font-medium text-foreground">{phoneNumber}</span>
-                    </a>
+            <div className="max-w-4xl mx-auto px-4 py-2">
+                {/* Contact Card */}
+                <div className="max-w-md mx-auto mb-1.5">
+                    <div className="border border-white/10 rounded-2xl p-2 space-y-3 backdrop-blur-xl bg-card/60">
+                        <p className="text-center text-sm font-medium text-foreground">
+                            Need help? Contact us:
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+                            <a
+                                href={`https://wa.me/${whatsappNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="glow-blue flex items-center justify-center gap-2 glass-interactive px-5 py-3 rounded-full hover:bg-[#25D366]/10 transition-all w-full sm:w-auto"
+                            >
+                                <Image
+                                    src="/whatsapp-icon.svg"
+                                    alt="WhatsApp"
+                                    width={18}
+                                    height={18}
+                                />
+                                <span className="text-sm font-medium text-foreground">WhatsApp</span>
+                            </a>
+
+                            <a
+                                href={`tel:${phoneNumber.replace(/\s/g, '')}`}
+                                className="glow-blue flex items-center justify-center gap-2 glass-interactive px-5 py-3 rounded-full hover:bg-primary/10 transition-all w-full sm:w-auto"
+                            >
+                                <Phone size={18} className="text-primary" />
+                                <span className="text-sm font-medium text-foreground">{phoneNumber}</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Store Location */}

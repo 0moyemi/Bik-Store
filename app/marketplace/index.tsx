@@ -176,7 +176,7 @@ const Marketplace = () => {
                     {!search && latestProducts.length > 0 && (
                         <section className="product-section px-4 lg:px-8 py-3 lg:py-4 bg-background border-b border-border">
                             <h2 className="text-lg lg:text-3xl font-bold text-foreground mb-3 lg:mb-5">Latest in Store</h2>
-                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
+                            <div className="overflow-x-auto scrollbar-hide">
                                 <div className="flex gap-3 lg:gap-6 pb-2">
                                     {latestProducts.map((product) => (
                                         <Link

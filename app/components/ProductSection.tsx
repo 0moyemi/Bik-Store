@@ -19,7 +19,7 @@ const ProductSection = ({ title, products, onAddToCart }: ProductSectionProps) =
                 </a>
             </div>
 
-            <div className="overflow-x-auto scrollbar-glass -mx-4 px-4">
+            <div className="overflow-x-auto scrollbar-glass">
                 <div className="flex gap-4 pb-2">
                     {products.map((product) => (
                         <Link
