@@ -48,7 +48,7 @@ const Header = () => {
               className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
             >
               <Mail size={18} />
-              <span className="text-l font-bold">About</span>
+              <span className="text-l font-bold">About Us</span>
             </Link>
           </div>
         </div>
