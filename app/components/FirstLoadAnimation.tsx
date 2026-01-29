@@ -58,6 +58,21 @@ export default function FirstLoadAnimation() {
     // Store timeline reference for cleanup
     let tl: gsap.core.Timeline | null = null;
 
+    // Function to skip animation
+    const skipAnimation = () => {
+      if (tl) tl.kill();
+      setIsFadingOut(true);
+      const pageContent = document.getElementById('page-content');
+      if (pageContent) {
+        pageContent.style.opacity = '1';
+        pageContent.style.transition = 'opacity 0.3s ease-in';
+      }
+      setTimeout(() => {
+        setIsVisible(false);
+        document.body.style.overflow = 'auto';
+      }, 300);
+    };
+
     // Wait for DOM elements to be rendered before animating
     setTimeout(() => {
       tl = gsap.timeline({
@@ -148,13 +163,33 @@ export default function FirstLoadAnimation() {
     return () => {
       if (tl) tl.kill();
       document.body.style.overflow = 'auto';
+      // Remove click listener
+      const overlay = document.querySelector('.first-load-overlay');
+      if (overlay) {
+        overlay.removeEventListener('click', skipAnimation as any);
+      }
     };
   }, []); // Empty deps - only run ONCE on mount
 
   if (!isVisible) return null;
 
   return (
-    <div className={`first-load-overlay ${isFadingOut ? 'fade-out' : ''}`}>
+    <div
+      className={`first-load-overlay ${isFadingOut ? 'fade-out' : ''}`}
+      onClick={() => {
+        setIsFadingOut(true);
+        const pageContent = document.getElementById('page-content');
+        if (pageContent) {
+          pageContent.style.opacity = '1';
+          pageContent.style.transition = 'opacity 0.3s ease-in';
+        }
+        setTimeout(() => {
+          setIsVisible(false);
+          document.body.style.overflow = 'auto';
+        }, 300);
+      }}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="animation-wrapper">
         <div className="stage">
           <div className="zero z1"></div>
