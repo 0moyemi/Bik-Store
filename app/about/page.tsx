@@ -13,11 +13,13 @@ import Footer from '../components/Footer'
 
 const page = () => {
     return (
-        <main className="min-h-screen bg-background flex flex-col">
+        <>
             <Header />
-            <About />
-            <Footer />
-        </main>
+            <main className="min-h-screen bg-background flex flex-col pt-[52px]">
+                <About />
+                <Footer />
+            </main>
+        </>
     )
 }
 

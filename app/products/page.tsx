@@ -8,11 +8,13 @@ const Page = () => {
     const [searchQuery, setSearchQuery] = useState('')
 
     return (
-        <main className="min-h-screen bg-background">
+        <>
             <Header />
-            <Searchbar value={searchQuery} onChange={setSearchQuery} />
-            <ProductGrid />
-        </main>
+            <main className="min-h-screen bg-background pt-[52px]">
+                <Searchbar value={searchQuery} onChange={setSearchQuery} />
+                <ProductGrid />
+            </main>
+        </>
     )
 }
 

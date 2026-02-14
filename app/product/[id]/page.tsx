@@ -128,8 +128,8 @@ export default async function Page({ params }: PageProps) {
           }}
         />
       )}
-      <main className="min-h-screen bg-background">
-        <Header />
+      <Header />
+      <main className="min-h-screen bg-background pt-[52px]">
         <ProductDetails productId={id} />
       </main>
     </>

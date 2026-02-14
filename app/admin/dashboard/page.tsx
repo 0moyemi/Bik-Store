@@ -3,10 +3,12 @@ import AdminDashboard from '.'
 
 const page = () => {
   return (
-    <main className="min-h-screen bg-background">
+    <>
       <Header />
-      <AdminDashboard />
-    </main>
+      <main className="min-h-screen bg-background pt-[52px]">
+        <AdminDashboard />
+      </main>
+    </>
   )
 }
 

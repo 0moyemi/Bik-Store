@@ -4,11 +4,13 @@ import Footer from '../components/Footer'
 
 const page = () => {
     return (
-        <main className="min-h-screen bg-background flex flex-col">
+        <>
             <Header />
-            <Checkout />
-            <Footer />
-        </main>
+            <main className="min-h-screen bg-background flex flex-col pt-[52px]">
+                <Checkout />
+                <Footer />
+            </main>
+        </>
     )
 }
 
