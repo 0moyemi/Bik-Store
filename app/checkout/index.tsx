@@ -88,13 +88,29 @@ const Checkout = () => {
 
     setIsSubmitting(true)
 
-    // Simulate processing delay for better UX feedback
-    setTimeout(() => {
-      localStorage.removeItem("cart")
-      updateCartCount()
-      setOrderComplete(true)
-      setIsSubmitting(false)
-    }, 1500)
+    // Submit order to backend for stock decrement
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cartItems })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status) {
+          localStorage.removeItem("cart")
+          updateCartCount()
+          setOrderComplete(true)
+        } else {
+          alert(data.message || 'Order failed. Please try again.')
+        }
+      })
+      .catch(err => {
+        console.error('Order error:', err)
+        alert('Order failed. Please try again.')
+      })
+      .finally(() => {
+        setIsSubmitting(false)
+      })
   }
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)

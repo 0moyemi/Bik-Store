@@ -2,8 +2,60 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Product from '@/models/Product'
 import { getAdminFromToken } from '@/lib/auth'
-import { sanitizeInput, containsMaliciousContent } from '@/lib/validation'
+import { sanitizeInput, containsMaliciousContent, validateSizeLabel } from '@/lib/validation'
 import mongoose from 'mongoose'
+
+const normalizeSizesInput = (sizes: unknown) => {
+    if (!Array.isArray(sizes) || sizes.length === 0) {
+        return { sizes: [], error: 'Please provide at least 1 size' }
+    }
+
+    const sanitizedSizes: Array<{ label: string; stock: number }> = []
+    const seenLabels = new Set<string>()
+
+    for (const entry of sizes) {
+        if (!entry || typeof entry !== 'object') {
+            return { sizes: [], error: 'Invalid size entry' }
+        }
+
+        const rawLabel = typeof (entry as { label?: unknown }).label === 'string'
+            ? (entry as { label: string }).label.trim()
+            : ''
+        const labelResult = validateSizeLabel(rawLabel)
+        if (!labelResult.isValid) {
+            return { sizes: [], error: labelResult.error || 'Invalid size label' }
+        }
+
+        const sanitizedLabel = sanitizeInput(rawLabel).slice(0, 20)
+        if (!sanitizedLabel) {
+            return { sizes: [], error: 'Invalid size label' }
+        }
+
+        const labelKey = sanitizedLabel.toLowerCase()
+        if (seenLabels.has(labelKey)) {
+            return { sizes: [], error: 'Duplicate size labels are not allowed' }
+        }
+        seenLabels.add(labelKey)
+
+        const stockValue = (entry as { stock?: unknown }).stock
+        const stockNum = Number(stockValue)
+        if (!Number.isInteger(stockNum) || stockNum < 0 || stockNum > 1000000) {
+            return { sizes: [], error: 'Invalid size stock' }
+        }
+
+        sanitizedSizes.push({ label: sanitizedLabel, stock: stockNum })
+    }
+
+    return { sizes: sanitizedSizes }
+}
+
+const normalizeStockInput = (value: unknown) => {
+    const stockNum = Number(value)
+    if (!Number.isInteger(stockNum) || stockNum < 0 || stockNum > 1000000) {
+        return { stock: 0, error: 'Invalid stock value' }
+    }
+    return { stock: stockNum }
+}
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
@@ -85,13 +137,21 @@ export async function PUT(
         const body = await req.json()
 
         // SECURITY: Only allow specific fields to be updated (prevent overposting)
-        const allowedFields = ['name', 'price', 'description', 'category', 'features', 'images']
+        const allowedFields = ['name', 'price', 'description', 'category', 'features', 'images', 'hasSizes', 'sizes', 'stock']
         const updateData: any = {}
 
         for (const field of allowedFields) {
             if (field in body) {
                 updateData[field] = body[field]
             }
+        }
+
+        const existingProduct = await Product.findById(id).lean()
+        if (!existingProduct) {
+            return NextResponse.json(
+                { status: false, message: 'Product not found' },
+                { status: 404 }
+            )
         }
 
         // SECURITY: Validate and sanitize each field if present
@@ -161,17 +221,64 @@ export async function PUT(
                 .slice(0, 20)
         }
 
+        if (updateData.hasSizes !== undefined) {
+            updateData.hasSizes = Boolean(updateData.hasSizes)
+        }
+
+        if (updateData.sizes !== undefined) {
+            const sizesResult = normalizeSizesInput(updateData.sizes)
+            if (sizesResult.error) {
+                return NextResponse.json(
+                    { status: false, message: sizesResult.error },
+                    { status: 400 }
+                )
+            }
+            updateData.sizes = sizesResult.sizes
+        }
+
+        if (updateData.stock !== undefined) {
+            const stockResult = normalizeStockInput(updateData.stock)
+            if (stockResult.error) {
+                return NextResponse.json(
+                    { status: false, message: stockResult.error },
+                    { status: 400 }
+                )
+            }
+            updateData.stock = stockResult.stock
+        }
+
+        const nextHasSizes = updateData.hasSizes ?? existingProduct.hasSizes ?? false
+        const nextSizes = updateData.sizes ?? existingProduct.sizes ?? []
+        const nextStock = updateData.stock ?? existingProduct.stock ?? 0
+
+        if (nextHasSizes) {
+            if (!Array.isArray(nextSizes) || nextSizes.length === 0) {
+                return NextResponse.json(
+                    { status: false, message: 'Please provide at least 1 size' },
+                    { status: 400 }
+                )
+            }
+            const totalSizeStock = nextSizes.reduce((sum: number, size: { label: string; stock: number }) => sum + size.stock, 0)
+            updateData.stock = totalSizeStock
+        } else {
+            if (updateData.sizes && Array.isArray(updateData.sizes) && updateData.sizes.length > 0) {
+                return NextResponse.json(
+                    { status: false, message: 'Sizes are not allowed when sizes are disabled' },
+                    { status: 400 }
+                )
+            }
+            if (updateData.hasSizes === false) {
+                updateData.sizes = []
+            }
+            if (nextStock === undefined || nextStock === null) {
+                updateData.stock = 0
+            }
+        }
+
         const product = await Product.findByIdAndUpdate(id, updateData, {
             new: true,
             runValidators: true
         })
-
-        if (!product) {
-            return NextResponse.json(
-                { status: false, message: 'Product not found' },
-                { status: 404 }
-            )
-        }
 
         return NextResponse.json({
             status: true,

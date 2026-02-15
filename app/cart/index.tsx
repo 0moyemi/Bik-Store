@@ -9,7 +9,7 @@ import Link from "next/link"
 const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const { updateCartCount } = useCart()
-  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; productId: string; productName: string }>({ show: false, productId: '', productName: '' })
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; productId: string; productName: string; selectedSize: string | undefined }>({ show: false, productId: '', productName: '', selectedSize: undefined })
 
   useEffect(() => {
     loadCart()
@@ -20,9 +20,9 @@ const Cart = () => {
     setCartItems(cart)
   }
 
-  const updateQuantity = (productId: string, change: number) => {
+  const updateQuantity = (productId: string, selectedSize: string | undefined, change: number) => {
     const updatedCart = cartItems.map(item => {
-      if (item._id === productId) {
+      if (item._id === productId && item.selectedSize === selectedSize) {
         const newQuantity = item.quantity + change
         return { ...item, quantity: Math.max(1, newQuantity) }
       }
@@ -34,19 +34,20 @@ const Cart = () => {
     updateCartCount()
   }
 
-  const removeItem = (productId: string) => {
-    const item = cartItems.find(item => item._id === productId)
+  const removeItem = (productId: string, selectedSize: string | undefined) => {
+    const item = cartItems.find(item => item._id === productId && item.selectedSize === selectedSize)
     if (!item) return
 
-    setDeleteConfirm({ show: true, productId, productName: item.name })
+    const nameSuffix = item.selectedSize ? ` (${item.selectedSize})` : ''
+    setDeleteConfirm({ show: true, productId, productName: `${item.name}${nameSuffix}`, selectedSize: item.selectedSize })
   }
 
   const confirmDelete = () => {
-    const updatedCart = cartItems.filter(item => item._id !== deleteConfirm.productId)
+    const updatedCart = cartItems.filter(item => !(item._id === deleteConfirm.productId && item.selectedSize === deleteConfirm.selectedSize))
     setCartItems(updatedCart)
     localStorage.setItem("cart", JSON.stringify(updatedCart))
     updateCartCount()
-    setDeleteConfirm({ show: false, productId: '', productName: '' })
+    setDeleteConfirm({ show: false, productId: '', productName: '', selectedSize: undefined })
   }
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -96,8 +97,8 @@ const Cart = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {cartItems.map((item) => (
-              <div key={item._id} className="glass-card rounded-lg p-3 flex gap-3 border border-white/10">
+            {cartItems.map((item, index) => (
+              <div key={`${item._id}-${item.selectedSize || 'one'}-${index}`} className="glass-card rounded-lg p-3 flex gap-3 border border-white/10">
                 <div className="w-20 h-20 bg-secondary/20 backdrop-blur-sm rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {item.images && item.images.length > 0 && item.images[0] ? (
                     <Image
@@ -114,11 +115,14 @@ const Cart = () => {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground truncate">{item.name}</p>
                   <p className="text-primary font-bold">₦{item.price.toLocaleString()}</p>
+                  {item.selectedSize && (
+                    <p className="text-xs text-muted-foreground">Size: {item.selectedSize}</p>
+                  )}
 
                   {/* Quantity controls */}
                   <div className="flex items-center gap-2 mt-2">
                     <button
-                      onClick={() => updateQuantity(item._id, -1)}
+                      onClick={() => updateQuantity(item._id, item.selectedSize, -1)}
                       className="glow-blue w-7 h-7 rounded-full glass-interactive flex items-center justify-center hover:scale-105 transition-all"
                       disabled={item.quantity <= 1}
                     >
@@ -126,7 +130,7 @@ const Cart = () => {
                     </button>
                     <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item._id, 1)}
+                      onClick={() => updateQuantity(item._id, item.selectedSize, 1)}
                       className="glow-blue w-7 h-7 rounded-full glass-interactive flex items-center justify-center hover:scale-105 transition-all"
                     >
                       <Plus size={14} />
@@ -134,7 +138,7 @@ const Cart = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => removeItem(item._id)}
+                  onClick={() => removeItem(item._id, item.selectedSize)}
                   className="glow-blue text-destructive hover:opacity-70 self-start"
                 >
                   <Trash2 size={18} />
@@ -179,7 +183,7 @@ const Cart = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md" onClick={() => setDeleteConfirm({ show: false, productId: '', productName: '' })}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md" onClick={() => setDeleteConfirm({ show: false, productId: '', productName: '', selectedSize: undefined })}>
           <div className="glass-strong rounded-lg p-6 max-w-md w-full mx-4 border border-white/10" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-foreground mb-3">Remove Item?</h3>
             <p className="text-foreground/80 mb-6">
@@ -187,7 +191,7 @@ const Cart = () => {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => setDeleteConfirm({ show: false, productId: '', productName: '' })}
+                onClick={() => setDeleteConfirm({ show: false, productId: '', productName: '', selectedSize: undefined })}
                 className="flex-1 glass-interactive text-foreground py-2.5 rounded-lg font-medium hover:bg-white/10 transition-all"
               >
                 Cancel

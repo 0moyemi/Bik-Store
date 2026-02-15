@@ -4,7 +4,12 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import FileUpload from "@/app/components/FileUpload"
 import VideoUpload from "@/app/components/VideoUpload"
-import { validateProductName, validatePrice, validateDescription, validateText } from "@/lib/validation"
+import { validateProductName, validatePrice, validateDescription, validateText, validateSizeLabel } from "@/lib/validation"
+
+interface ProductSize {
+  label: string
+  stock: number
+}
 
 interface Product {
   _id: string
@@ -14,7 +19,17 @@ interface Product {
   category: string
   features: string[]
   images: string[]
+  hasSizes?: boolean
+  sizes?: ProductSize[]
+  stock?: number
 }
+
+type SizeDraft = {
+  label: string
+  stock: string
+}
+
+const SIZE_OPTIONS = Array.from({ length: 21 }, (_, i) => (50 + i).toString())
 
 const AdminDashboard = () => {
   const [showUploadForm, setShowUploadForm] = useState(false)
@@ -33,15 +48,21 @@ const AdminDashboard = () => {
     category: 'Abaya',
     features: ['', ''],
     images: [] as string[],
-    videos: [] as string[]
+    videos: [] as string[],
+    hasSizes: false,
+    sizes: [] as SizeDraft[],
+    stock: ''
   })
 
   const [formErrors, setFormErrors] = useState({
     name: '',
     price: '',
     description: '',
-    features: [] as string[]
+    features: [] as string[],
+    sizes: [] as string[],
+    stock: ''
   })
+
 
   useEffect(() => {
     fetchProducts()
@@ -70,7 +91,7 @@ const AdminDashboard = () => {
     e.preventDefault()
 
     // Reset errors
-    setFormErrors({ name: '', price: '', description: '', features: [] })
+    setFormErrors({ name: '', price: '', description: '', features: [], sizes: [], stock: '' })
 
     // Validate product name
     const nameValidation = validateProductName(formData.name)
@@ -99,6 +120,64 @@ const AdminDashboard = () => {
       return
     }
 
+    let normalizedSizes: Array<{ label: string; stock: number }> = []
+    let normalizedStock = 0
+
+    if (formData.hasSizes) {
+      const sizeErrors: string[] = []
+      const labelSet = new Set<string>()
+
+      if (formData.sizes.length === 0) {
+        setToast({ message: 'Please add at least one size', type: 'error' })
+        setTimeout(() => setToast(null), 3000)
+        return
+      }
+
+      formData.sizes.forEach((size, index) => {
+        const label = size.label.trim()
+        if (!SIZE_OPTIONS.includes(label)) {
+          sizeErrors[index] = 'Select a valid size (50-70)'
+          return
+        }
+        const labelValidation = validateSizeLabel(label)
+        if (!labelValidation.isValid) {
+          sizeErrors[index] = labelValidation.error || 'Invalid size label'
+          return
+        }
+
+        const labelKey = label.toLowerCase()
+        if (labelSet.has(labelKey)) {
+          sizeErrors[index] = 'Duplicate size label'
+          return
+        }
+        labelSet.add(labelKey)
+
+        const stockNum = Number(size.stock)
+        if (!Number.isInteger(stockNum) || stockNum < 0) {
+          sizeErrors[index] = 'Stock must be a whole number (0 or more)'
+          return
+        }
+
+        normalizedSizes.push({ label, stock: stockNum })
+      })
+
+      if (sizeErrors.some(error => error && error.length > 0)) {
+        setFormErrors(prev => ({ ...prev, sizes: sizeErrors }))
+        setToast({ message: 'Please fix size errors', type: 'error' })
+        setTimeout(() => setToast(null), 3000)
+        return
+      }
+    } else {
+      const stockNum = Number(formData.stock)
+      if (!Number.isInteger(stockNum) || stockNum < 0) {
+        setFormErrors(prev => ({ ...prev, stock: 'Stock must be a whole number (0 or more)' }))
+        setToast({ message: 'Please fix stock errors', type: 'error' })
+        setTimeout(() => setToast(null), 3000)
+        return
+      }
+      normalizedStock = stockNum
+    }
+
     // Validate features
     const featureErrors: string[] = []
     formData.features.forEach((feature, index) => {
@@ -122,11 +201,16 @@ const AdminDashboard = () => {
     const cleanVideos = formData.videos.filter(vid => vid && vid.trim() !== '')
     const allMedia = [...cleanImages, ...cleanVideos]
 
+    const totalSizeStock = normalizedSizes.reduce((sum, size) => sum + size.stock, 0)
+
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
       features: formData.features.filter(f => f && f.trim() !== ''),
-      images: allMedia
+      images: allMedia,
+      hasSizes: formData.hasSizes,
+      sizes: formData.hasSizes ? normalizedSizes : [],
+      stock: formData.hasSizes ? totalSizeStock : normalizedStock
     }
 
     try {
@@ -147,7 +231,7 @@ const AdminDashboard = () => {
         setShowUploadForm(false)
         setEditingProduct(null)
         resetForm()
-        setFormErrors({ name: '', price: '', description: '', features: [] })
+        setFormErrors({ name: '', price: '', description: '', features: [], sizes: [], stock: '' })
         fetchProducts()
       } else {
         setToast({ message: data.message, type: 'error' })
@@ -198,6 +282,11 @@ const AdminDashboard = () => {
       url.includes('/video/') || url.match(/\.(mp4|webm|mov)$/i)
     )
 
+    const hasSizes = Boolean(product.hasSizes)
+    const sizeDrafts: SizeDraft[] = hasSizes && product.sizes
+      ? product.sizes.map(size => ({ label: size.label, stock: size.stock.toString() }))
+      : []
+
     setFormData({
       name: product.name,
       price: product.price.toString(),
@@ -205,7 +294,10 @@ const AdminDashboard = () => {
       category: product.category,
       features: product.features.length >= 2 ? product.features : [...product.features, ''],
       images: productImages,
-      videos: productVideos
+      videos: productVideos,
+      hasSizes,
+      sizes: sizeDrafts,
+      stock: !hasSizes && product.stock !== undefined ? product.stock.toString() : ''
     })
     setShowUploadForm(true)
   }
@@ -218,7 +310,10 @@ const AdminDashboard = () => {
       category: 'Abaya',
       features: ['', ''],
       images: [],
-      videos: []
+      videos: [],
+      hasSizes: false,
+      sizes: [],
+      stock: ''
     })
   }
 
@@ -264,6 +359,51 @@ const AdminDashboard = () => {
     if (formData.features.length > 2) {
       setFormData({ ...formData, features: formData.features.filter((_, i) => i !== index) })
     }
+  }
+
+  const toggleHasSizes = (value: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      hasSizes: value,
+      sizes: value ? (prev.sizes.length > 0 ? prev.sizes : [{ label: '', stock: '' }]) : [],
+      stock: value ? '' : prev.stock
+    }))
+    setFormErrors(prev => ({ ...prev, sizes: [], stock: '' }))
+  }
+
+  const addSizeRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: [...prev.sizes, { label: '', stock: '' }]
+    }))
+  }
+
+  const updateSizeLabel = (index: number, value: string) => {
+    const nextSizes = [...formData.sizes]
+    nextSizes[index] = { ...nextSizes[index], label: value }
+    setFormData(prev => ({ ...prev, sizes: nextSizes }))
+    setFormErrors(prev => {
+      const nextErrors = [...prev.sizes]
+      nextErrors[index] = ''
+      return { ...prev, sizes: nextErrors }
+    })
+  }
+
+  const updateSizeStock = (index: number, value: string) => {
+    const nextSizes = [...formData.sizes]
+    nextSizes[index] = { ...nextSizes[index], stock: value }
+    setFormData(prev => ({ ...prev, sizes: nextSizes }))
+    setFormErrors(prev => {
+      const nextErrors = [...prev.sizes]
+      nextErrors[index] = ''
+      return { ...prev, sizes: nextErrors }
+    })
+  }
+
+  const removeSizeRow = (index: number) => {
+    const nextSizes = formData.sizes.filter((_, i) => i !== index)
+    setFormData(prev => ({ ...prev, sizes: nextSizes }))
+    setFormErrors(prev => ({ ...prev, sizes: prev.sizes.filter((_, i) => i !== index) }))
   }
 
   return (
@@ -466,6 +606,104 @@ const AdminDashboard = () => {
                   <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>
                 )}
               </div>
+            </div>
+
+            {/* Inventory and Sizes */}
+            <div className="space-y-3">
+              <div className="glass-card rounded-lg p-4 border border-white/10">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground">Does this item have different sizes?</label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Turn ON for clothing with sizes (50-70). Leave OFF for one-size items.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.hasSizes}
+                      onChange={(e) => toggleHasSizes(e.target.checked)}
+                      className="h-6 w-6 rounded border-2 border-primary/50 bg-transparent checked:bg-primary checked:border-primary cursor-pointer"
+                    />
+                    <span className="text-base font-medium text-foreground">Has sizes</span>
+                  </label>
+                </div>
+              </div>
+
+              {formData.hasSizes ? (
+                <div className="space-y-3">
+                  <div className="space-y-3">
+                    {formData.sizes.map((size, index) => (
+                      <div key={`${size.label}-${index}`}>
+                        <div className="flex items-end gap-2">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-foreground mb-1">Size</label>
+                            <select
+                              value={size.label}
+                              onChange={(e) => updateSizeLabel(index, e.target.value)}
+                              className={`w-full glass-interactive rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 transition-all ${formErrors.sizes[index] ? 'ring-2 ring-red-500' : 'focus:ring-primary/50'
+                                }`}
+                            >
+                              <option value="">Select size</option>
+                              {SIZE_OPTIONS.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="w-32">
+                            <label className="block text-xs font-medium text-foreground mb-1">Quantity</label>
+                            <input
+                              type="number"
+                              value={size.stock}
+                              onChange={(e) => updateSizeStock(index, e.target.value)}
+                              className="w-full glass-interactive rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                              placeholder="0"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeSizeRow(index)}
+                            className="h-10 w-10 flex-shrink-0 bg-red-500 text-white rounded-lg hover:opacity-90 flex items-center justify-center"
+                            title="Remove size"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        {formErrors.sizes[index] && (
+                          <p className="text-red-500 text-sm mt-1">{formErrors.sizes[index]}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addSizeRow}
+                    className="glow-blue w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={18} />
+                    Add Another Size
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Stock</label>
+                  <input
+                    type="number"
+                    value={formData.stock}
+                    onChange={(e) => {
+                      setFormData({ ...formData, stock: e.target.value })
+                      setFormErrors(prev => ({ ...prev, stock: '' }))
+                    }}
+                    className={`w-full glass-interactive rounded-lg px-4 py-2 text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 transition-all ${formErrors.stock ? 'ring-2 ring-red-500' : 'focus:ring-primary/50'
+                      }`}
+                    placeholder="0"
+                  />
+                  {formErrors.stock && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.stock}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Features */}

@@ -19,6 +19,8 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [lastAddedSize, setLastAddedSize] = useState('')
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -28,6 +30,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
         const data = await res.json()
         if (data.status && data.product) {
           setProduct(data.product)
+          setSelectedSize('')
         }
       } catch (error) {
         console.error('Error fetching product:', error)
@@ -38,23 +41,33 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
     fetchProduct()
   }, [productId])
 
+  const availableSizes = product?.sizes?.filter(size => size.stock > 0) || []
+
   const addToCart = () => {
     if (!product || isAdding) return
+    const defaultSize = availableSizes[0]?.label || ''
+    const sizeToUse = selectedSize || defaultSize
+
+    if (product.hasSizes && product.sizes && product.sizes.length > 0 && !sizeToUse) {
+      return
+    }
     setIsAdding(true)
 
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existing = cart.find((item: any) => item._id === product._id)
+    const existing = cart.find((item: any) => item._id === product._id && item.selectedSize === sizeToUse)
 
     if (existing) {
       existing.quantity += quantity
     } else {
-      cart.push({ ...product, quantity })
+      cart.push({ ...product, quantity, selectedSize: sizeToUse || undefined })
     }
 
     localStorage.setItem("cart", JSON.stringify(cart))
     updateCartCount()
+    setLastAddedSize(sizeToUse)
     setShowToast(true)
     setQuantity(1) // Reset quantity after adding
+    setSelectedSize('')
 
     // Reset loading state after animation
     setTimeout(() => setIsAdding(false), 1000)
@@ -209,6 +222,34 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
           )}
         </div>
 
+        {product.hasSizes && product.sizes && product.sizes.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-foreground font-medium">Select size</span>
+            </div>
+            {availableSizes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">All sizes are currently out of stock.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.map((size) => (
+                  <button
+                    key={size.label}
+                    onClick={() => {
+                      setSelectedSize(size.label)
+                    }}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-all ${selectedSize === size.label
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'glass-interactive text-foreground border-white/20 hover:border-white/40'
+                      }`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Quantity Selector */}
         <div className="flex items-center justify-between glass-card rounded-lg p-2 border border-white/10">
           <span className="text-foreground font-medium">Quantity</span>
@@ -233,7 +274,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
         {/* Add to Cart Button - UX optimized for non-technical users */}
         <button
           onClick={addToCart}
-          disabled={isAdding}
+          disabled={isAdding || (product.hasSizes && availableSizes.length === 0)}
           className="glow-blue-active w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-4 rounded-lg font-bold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? (
@@ -256,7 +297,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
       {/* Toast Notification - Clear feedback for non-technical users */}
       {showToast && product && (
         <Toast
-          message={`✓ ${quantity > 1 ? `${quantity} items` : '1 item'} added to your cart! Tap the CART button at the top of the page to continue your order.`}
+          message={`✓ ${quantity > 1 ? `${quantity} items` : '1 item'} added to your cart${lastAddedSize ? ` (size ${lastAddedSize})` : ''}! Tap the CART button at the top of the page to continue your order.`}
           onClose={() => setShowToast(false)}
           type="success"
           duration={6000}

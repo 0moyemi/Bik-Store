@@ -2,7 +2,59 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Product from '@/models/Product'
 import { getAdminFromToken } from '@/lib/auth'
-import { sanitizeInput, containsMaliciousContent } from '@/lib/validation'
+import { sanitizeInput, containsMaliciousContent, validateSizeLabel } from '@/lib/validation'
+
+const normalizeSizesInput = (sizes: unknown) => {
+    if (!Array.isArray(sizes) || sizes.length === 0) {
+        return { sizes: [], error: 'Please provide at least 1 size' }
+    }
+
+    const sanitizedSizes: Array<{ label: string; stock: number }> = []
+    const seenLabels = new Set<string>()
+
+    for (const entry of sizes) {
+        if (!entry || typeof entry !== 'object') {
+            return { sizes: [], error: 'Invalid size entry' }
+        }
+
+        const rawLabel = typeof (entry as { label?: unknown }).label === 'string'
+            ? (entry as { label: string }).label.trim()
+            : ''
+        const labelResult = validateSizeLabel(rawLabel)
+        if (!labelResult.isValid) {
+            return { sizes: [], error: labelResult.error || 'Invalid size label' }
+        }
+
+        const sanitizedLabel = sanitizeInput(rawLabel).slice(0, 20)
+        if (!sanitizedLabel) {
+            return { sizes: [], error: 'Invalid size label' }
+        }
+
+        const labelKey = sanitizedLabel.toLowerCase()
+        if (seenLabels.has(labelKey)) {
+            return { sizes: [], error: 'Duplicate size labels are not allowed' }
+        }
+        seenLabels.add(labelKey)
+
+        const stockValue = (entry as { stock?: unknown }).stock
+        const stockNum = Number(stockValue)
+        if (!Number.isInteger(stockNum) || stockNum < 0 || stockNum > 1000000) {
+            return { sizes: [], error: 'Invalid size stock' }
+        }
+
+        sanitizedSizes.push({ label: sanitizedLabel, stock: stockNum })
+    }
+
+    return { sizes: sanitizedSizes }
+}
+
+const normalizeStockInput = (value: unknown) => {
+    const stockNum = Number(value)
+    if (!Number.isInteger(stockNum) || stockNum < 0 || stockNum > 1000000) {
+        return { stock: 0, error: 'Invalid stock value' }
+    }
+    return { stock: stockNum }
+}
 
 // GET all products
 export async function GET() {
@@ -49,7 +101,7 @@ export async function POST(req: Request) {
         await dbConnect()
 
         const body = await req.json()
-        const { name, price, description, category, features, images } = body
+        const { name, price, description, category, features, images, hasSizes, sizes, stock } = body
 
         // SECURITY: Validate required fields exist
         if (!name || !price || !description || !category) {
@@ -72,6 +124,30 @@ export async function POST(req: Request) {
                 { status: false, message: 'Please provide at least 1 image' },
                 { status: 400 }
             )
+        }
+
+        const normalizedHasSizes = Boolean(hasSizes) || Array.isArray(sizes)
+        let sanitizedSizes: Array<{ label: string; stock: number }> = []
+        let normalizedStock = 0
+
+        if (normalizedHasSizes) {
+            const sizesResult = normalizeSizesInput(sizes)
+            if (sizesResult.error) {
+                return NextResponse.json(
+                    { status: false, message: sizesResult.error },
+                    { status: 400 }
+                )
+            }
+            sanitizedSizes = sizesResult.sizes
+        } else if (stock !== undefined) {
+            const stockResult = normalizeStockInput(stock)
+            if (stockResult.error) {
+                return NextResponse.json(
+                    { status: false, message: stockResult.error },
+                    { status: 400 }
+                )
+            }
+            normalizedStock = stockResult.stock
         }
 
         // SECURITY: Check for malicious content (XSS)
@@ -101,6 +177,8 @@ export async function POST(req: Request) {
         }
 
         // SECURITY: Sanitize text inputs
+        const totalSizeStock = sanitizedSizes.reduce((sum, size) => sum + size.stock, 0)
+
         const sanitizedProduct = {
             name: sanitizeInput(name).slice(0, 200),
             price: priceNum,
@@ -109,7 +187,10 @@ export async function POST(req: Request) {
             features: features.map((f: string) => sanitizeInput(f).slice(0, 200)).filter(Boolean),
             images: images.filter((img: string) =>
                 typeof img === 'string' && img.startsWith('https://res.cloudinary.com/')
-            ).slice(0, 20)
+            ).slice(0, 20),
+            hasSizes: normalizedHasSizes,
+            sizes: normalizedHasSizes ? sanitizedSizes : [],
+            stock: normalizedHasSizes ? totalSizeStock : normalizedStock
         }
 
         const product = await Product.create(sanitizedProduct)

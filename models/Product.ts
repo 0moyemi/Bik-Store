@@ -7,6 +7,12 @@ export interface IProduct extends Document {
     category: string
     features: string[]
     images: string[]
+    hasSizes: boolean
+    sizes: Array<{
+        label: string
+        stock: number
+    }>
+    stock: number
     createdAt: Date
     updatedAt: Date
 }
@@ -44,6 +50,40 @@ const productSchema = new Schema<IProduct>(
                 validator: (v: string[]) => v.length >= 1,
                 message: "At least 1 image required"
             }
+        },
+        hasSizes: {
+            type: Boolean,
+            default: false
+        },
+        sizes: {
+            type: [
+                {
+                    label: {
+                        type: String,
+                        required: true,
+                        trim: true,
+                        maxlength: 20
+                    },
+                    stock: {
+                        type: Number,
+                        required: true,
+                        min: 0
+                    }
+                }
+            ],
+            default: [],
+            validate: {
+                validator: function (this: IProduct, v: Array<{ label: string; stock: number }>) {
+                    if (!this.hasSizes) return true
+                    return Array.isArray(v) && v.length > 0
+                },
+                message: 'At least 1 size is required when sizes are enabled'
+            }
+        },
+        stock: {
+            type: Number,
+            default: 0,
+            min: 0
         }
     },
     { timestamps: true }

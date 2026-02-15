@@ -35,6 +35,9 @@ const PATTERNS = {
 
     // Description (allows more characters but no scripts)
     DESCRIPTION: /^[a-zA-Z0-9\s\-.,!?'()₦\n&]+$/,
+
+    // Size label (numbers/letters with simple separators)
+    SIZE_LABEL: /^[a-zA-Z0-9\s\-+\/.#()]+$/,
 }
 
 /**
@@ -251,6 +254,29 @@ export const validateText = (value: string, fieldName: string, minLength: number
 
     if (value.length > maxLength) {
         return { isValid: false, error: `${fieldName} must be less than ${maxLength} characters` }
+    }
+
+    return { isValid: true }
+}
+
+/**
+ * Validate size label (e.g., 50, 60, S, M, L, One Size)
+ */
+export const validateSizeLabel = (value: string): ValidationResult => {
+    if (!value || value.trim().length === 0) {
+        return { isValid: false, error: 'Size label is required' }
+    }
+
+    if (containsMaliciousContent(value)) {
+        return { isValid: false, error: 'Size label contains invalid characters' }
+    }
+
+    if (value.length > 20) {
+        return { isValid: false, error: 'Size label must be 20 characters or less' }
+    }
+
+    if (!PATTERNS.SIZE_LABEL.test(value)) {
+        return { isValid: false, error: 'Size label contains invalid characters' }
     }
 
     return { isValid: true }

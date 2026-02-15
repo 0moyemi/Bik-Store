@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Product } from '@/app/types'
 import CategoryPills from '@/app/components/CategoryPills'
@@ -34,6 +34,7 @@ const categories = [
 
 const Marketplace = () => {
     const pathname = usePathname()
+    const router = useRouter()
     const { updateCartCount } = useCart()
     const [showToast, setShowToast] = useState(false)
     const [products, setProducts] = useState<Product[]>([])
@@ -75,6 +76,13 @@ const Marketplace = () => {
     }, [pathname])
 
     const addToCart = (e: React.MouseEvent, product: Product) => {
+        if (product.hasSizes) {
+            e.preventDefault()
+            e.stopPropagation()
+            router.push(`/product/${product._id}`)
+            return
+        }
+
         e.preventDefault()
         e.stopPropagation()
 
@@ -110,13 +118,23 @@ const Marketplace = () => {
         return shuffled
     }
 
+    const getProductStock = (product: Product) => {
+        if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+            return product.sizes.reduce((sum, size) => sum + (size.stock || 0), 0)
+        }
+        if (typeof product.stock === 'number') {
+            return product.stock
+        }
+        return 1
+    }
+
     const fetchProducts = () => {
         setLoading(true)
         fetch('/api/products')
             .then((res) => res.json())
             .then((data) => {
                 if (data.status) {
-                    const allProducts = data.products || []
+                    const allProducts = (data.products || []).filter((product: Product) => getProductStock(product) > 0)
                     // Keep latest products unshuffled for "Latest in Store"
                     setLatestProducts(allProducts.slice(0, 8))
                     // Shuffle products for main grid variety
